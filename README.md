@@ -4,7 +4,11 @@ A personal collection of brews and casks
 
 ## Formula
 
-### Casks
+### Brew
+
+* [png2icns](https://github.com/bitboss-ca/png2icns)
+
+### Cask
 
 * [Kin](https://github.com/arbourd/kin-desktop)
 
@@ -13,4 +17,5 @@ A personal collection of brews and casks
 ```sh
 $ brew tap arbourd/tap
 $ brew install <formula>
+$ brew cask install <formula>
 ```
