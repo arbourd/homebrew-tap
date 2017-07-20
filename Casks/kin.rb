@@ -1,6 +1,6 @@
 cask 'kin' do
-  version '0.3.0'
-  sha256 '30b4edc4b834901e90bd1fea4578b5b8d098d71d2b354d4afa25264d4e08f719'
+  version '0.3.1'
+  sha256 '4b0555e9a16b2169c4400a1efa4f372b63a41a2ee0bd0a0391c635be0a5070f7'
 
   url "https://github.com/arbourd/kin-desktop/releases/download/#{version}/Kin-#{version}-mac.zip"
   appcast 'https://github.com/arbourd/kin-desktop/releases.atom',
