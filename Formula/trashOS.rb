@@ -1,9 +1,9 @@
-class Trash < Formula
-  desc "Swiftly move items to the trash in macOS"
-  homepage "https://github.com/arbourd/trash"
-  url "https://github.com/arbourd/trash/archive/v0.1.0.tar.gz"
-  sha256 "a375e81facaefb1c08e4b91ec8fade13bdbf21d90a985ffcbb3b6585aec13cd5"
-  head "https://github.com/arbourd/trash.git"
+class Trashos < Formula
+  desc "Safely move items to macOS trash"
+  homepage "https://github.com/arbourd/trashOS"
+  url "https://github.com/arbourd/trashOS/archive/v0.1.0.tar.gz"
+  sha256 "288c0a225b1fe0b6e692dc60dee7de7b4cbc136935128109b49e4166c46338fa"
+  head "https://github.com/arbourd/trashOS.git"
 
   depends_on :xcode => ["9.0", :build]
 
