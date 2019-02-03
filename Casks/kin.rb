@@ -9,7 +9,7 @@ cask 'kin' do
   homepage 'https://github.com/arbourd/kin-desktop'
 
   auto_updates true
-  depends_on macos: '>= :mountain_lion'
+  depends_on macos: '>= :mavericks'
 
   app 'Kin.app'
 end
