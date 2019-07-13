@@ -9,4 +9,8 @@ class Png2icns < Formula
   def install
     bin.install "png2icns.sh" => "png2icns"
   end
+
+  test do
+    system "#{bin}/png2icns"
+  end
 end
