@@ -10,6 +10,6 @@ class Op < Formula
   end
 
   test do
-    system "#{bin}/op"
+    assert_match version.to_s, shell_output("#{bin}/op --version")
   end
 end

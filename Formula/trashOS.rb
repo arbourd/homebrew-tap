@@ -14,9 +14,10 @@ class Trashos < Formula
     system "swift", "build", "--disable-sandbox", "-c", "release", "-Xswiftc",
       "-static-stdlib"
     bin.install ".build/release/TrashCLI" => "trash"
+    prefix.install_metafiles
   end
 
   test do
-    system "#{bin}/trash"
+    assert_match "trash, version #{version}", shell_output("#{bin}/trash --version")
   end
 end
