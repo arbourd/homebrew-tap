@@ -7,7 +7,7 @@ A personal collection of formula
 * [coco-cpp](http://www.ssw.uni-linz.ac.at/coco/)
 * [op](https://app-updates.agilebits.com/product_history/CLI)
 * [png2icns](https://github.com/bitboss-ca/png2icns)
-* [trash](https://github.com/arbourd/trash)
+* [trashOS](https://github.com/arbourd/trashOS)
 
 ## Usage
 
