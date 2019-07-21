@@ -1,8 +1,8 @@
 class Trashos < Formula
   desc "Safely move items to macOS trash"
   homepage "https://github.com/arbourd/trashOS"
-  url "https://github.com/arbourd/trashOS/archive/v0.1.0.tar.gz"
-  sha256 "288c0a225b1fe0b6e692dc60dee7de7b4cbc136935128109b49e4166c46338fa"
+  url "https://github.com/arbourd/trashOS/archive/v0.2.0.tar.gz"
+  sha256 "384b631880fe91990af415d960dbb18efe95e30aca6369fc72d7c0f7cf1da749"
   head "https://github.com/arbourd/trashOS.git"
 
   depends_on :xcode => ["10.2", :build]
