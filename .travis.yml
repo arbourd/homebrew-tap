@@ -1,0 +1,11 @@
+language: objective-c
+osx_image: xcode10.2
+
+script:
+  - brew audit ./Formula/*.rb
+  - brew install -v ./Formula/*.rb
+  - brew test ./Formula/*.rb
+
+branches:
+  only:
+  - master
