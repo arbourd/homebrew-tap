@@ -1,6 +1,9 @@
 language: objective-c
 osx_image: xcode10.2
 
+env:
+  - HOMEBREW_NO_INSTALL_CLEANUP=1
+
 script:
   - brew audit ./Formula/*.rb
   - brew install -v ./Formula/*.rb
