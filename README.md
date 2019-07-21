@@ -5,9 +5,10 @@ A personal collection of formula
 ## Formulae
 
 * [coco-cpp](http://www.ssw.uni-linz.ac.at/coco/)
+* [git-get](https://github.com/arbourd/git-get)
 * [op](https://app-updates.agilebits.com/product_history/CLI)
 * [png2icns](https://github.com/bitboss-ca/png2icns)
-* [trash](https://github.com/arbourd/trash)
+* [trashOS](https://github.com/arbourd/trashOS)
 
 ## Usage
 
