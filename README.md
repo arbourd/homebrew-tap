@@ -2,6 +2,10 @@
 
 A personal collection of formula
 
+## Casks
+
+* [krew](https://krew.dev)
+
 ## Formulae
 
 * [coco-cpp](http://www.ssw.uni-linz.ac.at/coco/)

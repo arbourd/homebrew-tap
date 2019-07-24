@@ -1,13 +1,19 @@
 language: objective-c
-osx_image: xcode10.2
 
 env:
   - HOMEBREW_NO_INSTALL_CLEANUP=1
 
+matrix:
+  include:
+  - name: "Test Formulae"
+    osx_image: xcode10.2
+    env: TEST_SUITE=brew
+  - name: "Test Casks"
+    osx_image: xcode10.2
+    env: TEST_SUITE=cask
+
 script:
-  - brew audit ./Formula/*.rb
-  - brew install -v ./Formula/*.rb
-  - brew test ./Formula/*.rb
+  - ./test.sh $TEST_SUITE
 
 branches:
   only:
