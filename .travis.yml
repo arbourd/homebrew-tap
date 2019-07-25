@@ -1,5 +1,5 @@
 language: objective-c
-
+cache: bundler
 env:
   - HOMEBREW_NO_INSTALL_CLEANUP=1
 

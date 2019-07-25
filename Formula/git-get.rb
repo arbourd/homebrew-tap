@@ -8,7 +8,7 @@ class GitGet < Formula
   bottle do
     root_url "https://storage.googleapis.com/homebrew-arbourd-tap"
     cellar :any_skip_relocation
-    sha256 "a06a12b2286c59c50884bb14b028f0d29a797d675dd0167bc98b629aac85a38b" => :mojave
+    sha256 "b4854189915dc4246a6401177ace8d9b87dac390b707cb2b5f903b9683354748" => :mojave
   end
 
   depends_on "go" => :build
