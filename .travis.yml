@@ -1,7 +1,8 @@
 language: objective-c
-cache: bundler
-env:
-  - HOMEBREW_NO_INSTALL_CLEANUP=1
+
+cache:
+  directories:
+  - /usr/local/Homebrew/Library/Homebrew/vendor/bundle
 
 matrix:
   include:
@@ -13,7 +14,7 @@ matrix:
     env: TEST_SUITE=cask
 
 script:
-  - ./test.sh $TEST_SUITE
+  - make test-$TEST_SUITE
 
 branches:
   only:
