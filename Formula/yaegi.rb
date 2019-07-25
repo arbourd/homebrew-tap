@@ -1,8 +1,8 @@
 class Yaegi < Formula
   desc "Yet another elegant Go interpreter"
   homepage "https://github.com/containous/yaegi"
-  url "https://github.com/containous/yaegi/archive/v0.0.1.tar.gz"
-  sha256 "9c55e5b0941d49ecb639d9cb6e9803fe6431dd685c9dfe1d314f7111b6840fcf"
+  url "https://github.com/containous/yaegi/archive/v0.0.3.tar.gz"
+  sha256 "4473f490d7c79c30e93ccdc756cdd08d67c0cfba0c42e7d828e77c4b5072403b"
   head "https://github.com/containous/yaegi.git"
 
   depends_on "go" => :build
