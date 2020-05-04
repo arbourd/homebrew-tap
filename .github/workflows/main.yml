@@ -1,15 +1,17 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CI
 
-on: [push]
+on:
+  push:
+    paths:
+    - 'Casks/**'
+    - 'Formula/**'
 
 jobs:
-  build:
+  make:
 
-    runs-on: macOS-latest
-    
+    runs-on: macos-latest
+
     steps:
     - uses: actions/checkout@v1
-    - name: Execute full install
-      run:  make test-brew 
+    - name: Build, install and test Brew packages
+      run:  make test-brew
