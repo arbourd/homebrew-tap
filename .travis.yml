@@ -7,11 +7,11 @@ cache:
 matrix:
   include:
   - name: "Test Formulae"
-    osx_image: xcode10.2
+    osx_image: xcode11.3
     env: TEST_SUITE=brew
-  - name: "Test Casks"
-    osx_image: xcode10.2
-    env: TEST_SUITE=cask
+  # - name: "Test Casks"
+  #   osx_image: xcode10.2
+  #   env: TEST_SUITE=cask
 
 script:
   - make test-$TEST_SUITE
