@@ -18,25 +18,22 @@ jobs:
         working-directory: Formula
 
     steps:
-    - uses: actions/checkout@v1
-
-    - name: Cache Bundler RubyGems
+    - uses: actions/checkout@v2
+    - uses: actions/cache@v2
       id: cache
-      uses: actions/cache@v1
       with:
         path: /usr/local/Homebrew/Library/Homebrew/vendor/bundle/ruby
         key: rubygems-${{ hashFiles('/usr/local/Homebrew/Library/Homebrew/Gemfile.lock') }}
         restore-keys: rubygems-
 
-    - name: Install Bundler RubyGems
+    - run: brew install-bundler-gems
       if: steps.cache.outputs.cache-hit != 'true'
-      run: brew install-bundler-gems
 
-    - name: Brew audit
+    - name: brew audit
       run: brew audit --strict ./*.rb
 
-    - name: Brew install
+    - name: brew install
       run: brew install --build-from-source ./*.rb
 
-    - name: Brew test
+    - name: brew test
       run: brew test ./*.rb
