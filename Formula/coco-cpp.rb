@@ -1,5 +1,5 @@
 class CocoCpp < Formula
-  desc "The Compiler Generator Coco/R - C++ version"
+  desc "Compiler Generator Coco/R - C++ version"
   homepage "http://www.ssw.uni-linz.ac.at/coco/"
   url "http://www.ssw.uni-linz.ac.at/coco/CPP/CocoSourcesCPP.zip"
   version "20181203"
@@ -11,7 +11,7 @@ class CocoCpp < Formula
     sha256 "bc36cf059ba62e8ce20cd5e28e03214b51a6ec8b855851aaed8ccdd71131a144" => :mojave
   end
 
-  depends_on :xcode => ["6.0", :build]
+  depends_on xcode: ["6.0", :build]
 
   def install
     chmod "+x", "./build.sh"
