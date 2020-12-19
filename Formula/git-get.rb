@@ -1,8 +1,8 @@
 class GitGet < Formula
   desc "Go gets your code"
   homepage "https://github.com/arbourd/git-get"
-  url "https://github.com/arbourd/git-get/archive/v0.2.1.tar.gz"
-  sha256 "253e851d64f0adeaa520d49fc9abce73136386635f5ca52cef9d462597061a87"
+  url "https://github.com/arbourd/git-get/archive/v0.2.2.tar.gz"
+  sha256 "d24c34bee7567780b83fac8d8e6cc198e53ec837157581ab774e4683212177c7"
   head "https://github.com/arbourd/git-get.git"
 
   bottle do
