@@ -1,8 +1,8 @@
 class Trashos < Formula
   desc "Safely move items to macOS trash"
   homepage "https://github.com/arbourd/trashOS"
-  url "https://github.com/arbourd/trashOS/archive/v0.3.0.tar.gz"
-  sha256 "987c3800135ab0dcd41c252242ef0d5a6ee9c3c55cdf523a043634283c8d1257"
+  url "https://github.com/arbourd/trashOS/archive/v0.3.1.tar.gz"
+  sha256 "48ea49f22c63734d3eb3594f7063f589da59403bd3b2c4555a5e8700c9a9c818"
   head "https://github.com/arbourd/trashOS.git"
 
   bottle do
