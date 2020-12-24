@@ -1,8 +1,8 @@
 class GitGet < Formula
   desc "Go gets your code"
   homepage "https://github.com/arbourd/git-get"
-  url "https://github.com/arbourd/git-get/archive/v0.2.2.tar.gz"
-  sha256 "d24c34bee7567780b83fac8d8e6cc198e53ec837157581ab774e4683212177c7"
+  url "https://github.com/arbourd/git-get/archive/v0.2.3.tar.gz"
+  sha256 "904a1a9c405625c5a186f6e1769b9360e2b2f02e86b64fa1bc73dfaa262f9ca2"
   head "https://github.com/arbourd/git-get.git"
 
   depends_on "go" => :build
