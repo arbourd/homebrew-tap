@@ -5,12 +5,6 @@ class Trashos < Formula
   sha256 "48ea49f22c63734d3eb3594f7063f589da59403bd3b2c4555a5e8700c9a9c818"
   head "https://github.com/arbourd/trashOS.git"
 
-  bottle do
-    root_url "https://storage.googleapis.com/homebrew-arbourd-tap"
-    cellar :any_skip_relocation
-    sha256 "1a9b99f0c5d6f21c954fb2efe4b5d51a770db00bbb77ebaa17c41a1bb68e83f6" => :mojave
-  end
-
   depends_on xcode: ["11.4", :build]
 
   conflicts_with "trash", because: "both install a `trash` binary"
