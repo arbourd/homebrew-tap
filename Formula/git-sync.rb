@@ -19,4 +19,4 @@ class GitSync < Formula
       prefix.install_metafiles
     end
   end
-  end
+end
