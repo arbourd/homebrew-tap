@@ -1,8 +1,8 @@
 class GitSync < Formula
   desc "Updates your branches"
   homepage "https://github.com/arbourd/git-sync"
-  url "https://github.com/arbourd/git-sync/archive/v0.1.1.tar.gz"
-  sha256 "486a066db679bc434d3d817a59de95929e25e52c18b25ce457e4b6c52a1ee1be"
+  url "https://github.com/arbourd/git-sync/archive/v0.1.2.tar.gz"
+  sha256 "8ea7a0fd1e3f5959f01e81773277d376e0bb88da8a57acf139a43696f5b00ee2"
   head "https://github.com/arbourd/git-sync.git"
 
   depends_on "go" => :build
