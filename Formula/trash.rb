@@ -1,4 +1,4 @@
-class Trashos < Formula
+class Trash < Formula
   desc "Safely move items to macOS trash"
   homepage "https://github.com/arbourd/trashOS"
   url "https://github.com/arbourd/trashOS/archive/v0.3.1.tar.gz"

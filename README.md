@@ -7,7 +7,7 @@ A personal collection of formula
 ## Formulae
 
 * [git-get](https://github.com/arbourd/git-get)
-* [git-get](https://github.com/arbourd/git-sync)
+* [git-sync](https://github.com/arbourd/git-sync)
 * [trash](https://github.com/arbourd/trashOS)
 
 ## Usage

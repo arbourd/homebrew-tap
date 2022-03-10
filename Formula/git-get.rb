@@ -46,6 +46,7 @@ class GitGet < Formula
   end
 
   test do
-    assert_match "#{testpath}/src/github.com/arbourd/git-get", shell_output("#{bin}/git-get github.com/arbourd/git-get")
+    assert_match "#{testpath}/src/github.com/arbourd/git-get",
+                 shell_output("#{bin}/git-get github.com/arbourd/git-get")
   end
 end
