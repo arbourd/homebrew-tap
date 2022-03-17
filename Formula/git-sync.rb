@@ -5,20 +5,20 @@
 class GitSync < Formula
   desc "Updates your branches"
   homepage "https://github.com/arbourd/git-sync"
-  version "0.2.1"
+  version "0.2.2"
 
   on_macos do
-    if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.1/git-sync-v0.2.1-darwin-amd64.tar.gz"
-      sha256 "a992f7b891f368175f25602411b9608fc45a6552d371566f2b3ca9bd2d047c17"
+    if Hardware::CPU.arm?
+      url "https://github.com/arbourd/git-sync/releases/download/v0.2.2/git-sync-v0.2.2-darwin-arm64.tar.gz"
+      sha256 "1936792a970ce8c48fddd1ec898db8ffd1578fd19be3e6e257bb4fb4d0aa2598"
 
       def install
         bin.install "git-sync"
       end
     end
-    if Hardware::CPU.arm?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.1/git-sync-v0.2.1-darwin-arm64.tar.gz"
-      sha256 "49d5ff5fa7ad227c7db44d4a4b1e3aa8e85dc9f3c3054a3b32467466a7b5af3b"
+    if Hardware::CPU.intel?
+      url "https://github.com/arbourd/git-sync/releases/download/v0.2.2/git-sync-v0.2.2-darwin-amd64.tar.gz"
+      sha256 "0d5370ca8bde63a5b437dd2280dde1f4fb8e2b0c5f61e3dbd86d19da65bd5036"
 
       def install
         bin.install "git-sync"
@@ -28,16 +28,16 @@ class GitSync < Formula
 
   on_linux do
     if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.1/git-sync-v0.2.1-linux-amd64.tar.gz"
-      sha256 "c3487f1799e1463abd595d2ec1313d27e2d7ecd3963c9a78957886873a02e4cf"
+      url "https://github.com/arbourd/git-sync/releases/download/v0.2.2/git-sync-v0.2.2-linux-amd64.tar.gz"
+      sha256 "01c594ee741d32cdd390632f995b6837fc750073eb6d67e77e94644943dc9d23"
 
       def install
         bin.install "git-sync"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.1/git-sync-v0.2.1-linux-arm64.tar.gz"
-      sha256 "1c3f875747a273261dfb2fa9044d1b2ee13b4f6eac198e23257041b2579f0007"
+      url "https://github.com/arbourd/git-sync/releases/download/v0.2.2/git-sync-v0.2.2-linux-arm64.tar.gz"
+      sha256 "6ed2dcd2838fef68efc9bddf6d37c751375ff5eae7908ca35c9cee908e9c9bb0"
 
       def install
         bin.install "git-sync"
