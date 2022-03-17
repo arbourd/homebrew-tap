@@ -14,7 +14,8 @@ on:
 
 jobs:
   test:
-    runs-on: macos-11
+    runs-on: macos-latest
+
     env:
       HOMEBREW_GITHUB_ACTIONS: 1
       HOMEBREW_NO_ANALYTICS: 1
@@ -24,12 +25,13 @@ jobs:
     steps:
       - uses: Homebrew/actions/setup-homebrew@master
         id: set-up-homebrew
+      - run: brew uninstall go@1.15
 
       - uses: actions/cache@v2
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ matrix.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ matrix.os }}-rubygems-
+          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ runner.os }}-rubygems-
 
       - run: brew install-bundler-gems
       - run: brew test-bot --tap=arbourd/tap --only-tap-syntax
