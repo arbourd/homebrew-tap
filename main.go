@@ -59,7 +59,7 @@ func main() {
 	}
 	formula := buildFormula(r[0])
 
-	f, err := os.OpenFile("./Formula/go.rb", os.O_WRONLY|os.O_CREATE, 0600)
+	f, err := os.Create("./Formula/go.rb")
 	if err != nil {
 		log.Fatal(fmt.Errorf("cannot open file: %s", err))
 	}
@@ -119,22 +119,22 @@ const tmpl = `class Go < Formula
   desc "Open source programming language to build simple/reliable/efficient software"
   homepage "https://go.dev/"
   version "{{ .Version }}"
-  {{ range $f := .Files -}}
-  {{- if and .Darwin .Amd64 }}
+{{ range $f := .Files -}}
+{{- if and .Darwin .Amd64 }}
   if OS.mac?
-  {{- else if and .Darwin .Arm64 }}
+{{- else if and .Darwin .Arm64 }}
   if OS.mac? && Hardware::CPU.arm?
-  {{- else if and .Linux .Amd64 }}
+{{- else if and .Linux .Amd64 }}
   if OS.linux? && Hardware::CPU.intel?
-  {{- else if and .Linux .Arm64 }}
+{{- else if and .Linux .Arm64 }}
   if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-  {{- else if and .Linux .Arm }}
+{{- else if and .Linux .Arm }}
   if OS.linux? && Hardware::CPU.arm? && !Hardware::CPU.is_64_bit?
-  {{- else }} {{continue}} {{ end }}
+{{- end }}
     url "{{ $f.URL }}"
     sha256 "{{ $f.SHA256 }}"
   end
-  {{ end }}
+{{ end }}
   def install
     libexec.install Dir["*"]
     bin.install_symlink Dir[libexec/"bin/go*"]
