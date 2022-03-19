@@ -69,6 +69,8 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("cannot write file: %s", err))
 	}
+
+	fmt.Println(formula.Version)
 }
 
 func buildFormula(latest Release) Formula {
