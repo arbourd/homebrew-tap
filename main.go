@@ -27,16 +27,21 @@ type Formula struct {
 	Files   []File
 }
 
+type OSArch int
+
+const (
+	DarwinAmd64 OSArch = iota
+	DarwinArm64
+	LinuxAmd64
+	LinuxArm64
+	LinuxArm
+)
+
 type File struct {
 	URL    string
 	SHA256 string
 
-	Darwin bool
-	Linux  bool
-
-	Amd64 bool
-	Arm64 bool
-	Arm   bool
+	OSArch OSArch
 }
 
 const URL = "https://go.dev/dl/"
@@ -85,23 +90,17 @@ func buildFormula(latest Release) Formula {
 			SHA256: f.SHA256,
 		}
 
-		switch f.OS {
-		case "darwin":
-			file.Darwin = true
-		case "linux":
-			file.Linux = true
-		default:
-			continue
-		}
-
-		switch f.Arch {
-		case "amd64":
-			file.Amd64 = true
-		case "arm64":
-			file.Arm64 = true
-		case "armv6l":
-			file.Arm = true
-		default:
+		if f.OS == "darwin" && f.Arch == "amd64" {
+			file.OSArch = DarwinAmd64
+		} else if f.OS == "darwin" && f.Arch == "arm64" {
+			file.OSArch = DarwinArm64
+		} else if f.OS == "linux" && f.Arch == "amd64" {
+			file.OSArch = LinuxAmd64
+		} else if f.OS == "linux" && f.Arch == "arm64" {
+			file.OSArch = LinuxArm64
+		} else if f.OS == "linux" && f.Arch == "armv6l" {
+			file.OSArch = LinuxArm
+		} else {
 			continue
 		}
 
@@ -120,15 +119,15 @@ const tmpl = `class Go < Formula
   homepage "https://go.dev/"
   version "{{ .Version }}"
 {{ range $f := .Files -}}
-{{- if and .Darwin .Amd64 }}
+{{- if eq .OSArch 0 }}
   if OS.mac?
-{{- else if and .Darwin .Arm64 }}
+{{- else if eq .OSArch 1 }}
   if OS.mac? && Hardware::CPU.arm?
-{{- else if and .Linux .Amd64 }}
+{{- else if eq .OSArch 2 }}
   if OS.linux? && Hardware::CPU.intel?
-{{- else if and .Linux .Arm64 }}
+{{- else if eq .OSArch 3 }}
   if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-{{- else if and .Linux .Arm }}
+{{- else if eq .OSArch 4 }}
   if OS.linux? && Hardware::CPU.arm? && !Hardware::CPU.is_64_bit?
 {{- end }}
     url "{{ $f.URL }}"
