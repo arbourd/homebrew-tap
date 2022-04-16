@@ -1,12 +1,11 @@
 class Ockam < Formula
   desc "End-to-end encryption and mutual authentication for distributed applications"
   homepage "https://www.ockam.io/"
-  version "0.1.0"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/ockam-network/ockam/releases/download/ockam_cli_preview_v0.0.1/ockam.aarch64-apple-darwin"
-      sha256 "9be59381b949253d57c7be4b99fddfc92d8226ed06a248a6cc751793b0c51136"
+      url "https://github.com/ockam-network/ockam/releases/download/ockam_cli_preview_v0.12.0/ockam.aarch64-apple-darwin"
+      sha256 "7b0b7822bbc6655dcb8cacf559f00a6535048b5e972b9520046fb1ab70d42900"
 
       def install
         mv "ockam.aarch64-apple-darwin", "ockam"
@@ -15,8 +14,8 @@ class Ockam < Formula
     end
 
     if Hardware::CPU.intel?
-      url "https://github.com/ockam-network/ockam/releases/download/ockam_cli_preview_v0.0.1/ockam.x86_64-apple-darwin"
-      sha256 "2eb7749fcc80d977b784e249d54ba4c3e0bb9a31475d7273ffc82c7c2f5a5a27"
+      url "https://github.com/ockam-network/ockam/releases/download/ockam_cli_preview_v0.12.0/ockam.x86_64-apple-darwin"
+      sha256 "4188cbcf1c3be55b6c233e04522ff8b41e402bc38ce74d78b53429e3e7e89707"
 
       def install
         mv "ockam.x86_64-apple-darwin", "ockam"
@@ -27,8 +26,8 @@ class Ockam < Formula
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/ockam-network/ockam/releases/download/ockam_cli_preview_v0.0.1/ockam.x86_64-unknown-linux-gnu"
-      sha256 "fced37593eb3e7dacaba2cec82106a8aa5aaac8fb1a67a2dcf9d9712859c4a30"
+      url "https://github.com/ockam-network/ockam/releases/download/ockam_cli_preview_v0.12.0/ockam.aarch64-unknown-linux-gnu"
+      sha256 "11536714d24a0d3d562cc89f9b37e0b80de2ba5972399ffcaa6f7d8bfa2b1574"
 
       def install
         mv "ockam.x86_64-unknown-linux-gnu", "ockam"
@@ -37,8 +36,8 @@ class Ockam < Formula
     end
 
     if Hardware::CPU.intel?
-      url "https://github.com/ockam-network/ockam/releases/download/ockam_cli_preview_v0.0.1/ockam.aarch64-unknown-linux-gnu"
-      sha256 "7ac7b396a691e588c5fb57687759e6c4db84a2a3bbebb0765f4b38e5b1c5b00e"
+      url "https://github.com/ockam-network/ockam/releases/download/ockam_cli_preview_v0.12.0/ockam.x86_64-unknown-linux-gnu"
+      sha256 "d5324c288ceec6523eb0e4d06ad483073f22dbbf8d7118936bcb48642699b240"
 
       def install
         mv "ockam.aarch64-unknown-linux-gnu", "ockam"
