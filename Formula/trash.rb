@@ -5,21 +5,21 @@
 class Trash < Formula
   desc "Safely move items to macOS trash"
   homepage "https://github.com/arbourd/trash"
-  version "0.3.5"
+  version "0.3.6"
   depends_on :macos
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/arbourd/trash/releases/download/v0.3.5/trash-v0.3.5-darwin-arm64.tar.gz"
-      sha256 "34458aefd885c4512a6a42b8491d4254a9aec4c6b606b4e4d5a718fcfaa082e3"
+      url "https://github.com/arbourd/trash/releases/download/v0.3.6/trash-v0.3.6-darwin-arm64.tar.gz"
+      sha256 "035330cdfc4376146e691932e9f4424b93c8d5e17355a678dc7aa9dcaf9b86c3"
 
       def install
         bin.install "trash"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/arbourd/trash/releases/download/v0.3.5/trash-v0.3.5-darwin-amd64.tar.gz"
-      sha256 "23cce0ccb054d382d0d9b4dffcd5400cd31c50044e8387291b5b99150df785a7"
+      url "https://github.com/arbourd/trash/releases/download/v0.3.6/trash-v0.3.6-darwin-amd64.tar.gz"
+      sha256 "6d08553767fd22cdd777080873d104a995999d6fe22264eafc2d9cf2adfa22bd"
 
       def install
         bin.install "trash"
