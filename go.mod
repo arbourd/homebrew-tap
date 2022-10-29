@@ -1,3 +1,3 @@
 module github.com/arbourd/homebrew-tap
 
-go 1.18
+go 1.19
