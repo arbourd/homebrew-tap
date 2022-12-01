@@ -21,8 +21,8 @@ jobs:
         run: |
           VERSION=$(go run .)
           MINOR_VERSION=$(echo $VERSION | grep -oP '^\d+\.\d+')
-          echo "::set-output name=version::$VERSION"
-          echo "::set-output name=minor-version::$MINOR_VERSION"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "minor-version=${MINOR_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
