@@ -5,20 +5,20 @@
 class GitGet < Formula
   desc "Go gets your code"
   homepage "https://github.com/arbourd/git-get"
-  version "0.3.3"
+  version "0.4.0"
 
   on_macos do
-    if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-get/releases/download/v0.3.3/git-get-v0.3.3-darwin-amd64.tar.gz"
-      sha256 "78d68bbd0a21d57617ea72bfa327991770f9c9ceb03c6bb6995da346b1d6238a"
+    if Hardware::CPU.arm?
+      url "https://github.com/arbourd/git-get/releases/download/v0.4.0/git-get-v0.4.0-darwin-arm64.tar.gz"
+      sha256 "820bf438503a28b76ff320472724e8b4d76b810a62bfa6451b9b13152bff1b42"
 
       def install
         bin.install "git-get"
       end
     end
-    if Hardware::CPU.arm?
-      url "https://github.com/arbourd/git-get/releases/download/v0.3.3/git-get-v0.3.3-darwin-arm64.tar.gz"
-      sha256 "f6940f5a523e4a5e9911c6194f95b8d815bb743ba1e9333e47b2fb1c671423ab"
+    if Hardware::CPU.intel?
+      url "https://github.com/arbourd/git-get/releases/download/v0.4.0/git-get-v0.4.0-darwin-amd64.tar.gz"
+      sha256 "59e82c9bbc506e180c807820013978e0936543e4c3b01e7450af662156dfa058"
 
       def install
         bin.install "git-get"
@@ -27,17 +27,17 @@ class GitGet < Formula
   end
 
   on_linux do
-    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-get/releases/download/v0.3.3/git-get-v0.3.3-linux-arm64.tar.gz"
-      sha256 "189a1e689be7bb24756ac774895dcb4a15e5c7c08998cfe4273a76216bec0baf"
+    if Hardware::CPU.intel?
+      url "https://github.com/arbourd/git-get/releases/download/v0.4.0/git-get-v0.4.0-linux-amd64.tar.gz"
+      sha256 "7401e885cbd471f49471febe17eae5cde402bcbbf987a54d397e10ca3e17537a"
 
       def install
         bin.install "git-get"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-get/releases/download/v0.3.3/git-get-v0.3.3-linux-amd64.tar.gz"
-      sha256 "d608a1acda211f90076c632763d283740e991b5f7424a6b569339c5502e9fff5"
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+      url "https://github.com/arbourd/git-get/releases/download/v0.4.0/git-get-v0.4.0-linux-arm64.tar.gz"
+      sha256 "c9a299586df30392a7a523d5d71484c3496070aae8044c42599d1fb76c602cd4"
 
       def install
         bin.install "git-get"
