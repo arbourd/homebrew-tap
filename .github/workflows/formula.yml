@@ -27,7 +27,7 @@ jobs:
         id: set-up-homebrew
       # - run: brew uninstall go@1.15
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
