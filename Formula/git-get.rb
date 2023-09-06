@@ -5,20 +5,20 @@
 class GitGet < Formula
   desc "Go gets your code"
   homepage "https://github.com/arbourd/git-get"
-  version "0.4.0"
+  version "0.5.0"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/arbourd/git-get/releases/download/v0.4.0/git-get-v0.4.0-darwin-arm64.tar.gz"
-      sha256 "820bf438503a28b76ff320472724e8b4d76b810a62bfa6451b9b13152bff1b42"
+      url "https://github.com/arbourd/git-get/releases/download/v0.5.0/git-get-v0.5.0-darwin-arm64.tar.gz"
+      sha256 "685b7059ca689ef3d571f15fcb4051df2e8d192c5b2a426798114b1e4826c037"
 
       def install
         bin.install "git-get"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-get/releases/download/v0.4.0/git-get-v0.4.0-darwin-amd64.tar.gz"
-      sha256 "59e82c9bbc506e180c807820013978e0936543e4c3b01e7450af662156dfa058"
+      url "https://github.com/arbourd/git-get/releases/download/v0.5.0/git-get-v0.5.0-darwin-amd64.tar.gz"
+      sha256 "8680b626b70e020b4cd95655d34707fc799d3a792c2dd70fc07310f151789181"
 
       def install
         bin.install "git-get"
@@ -28,16 +28,16 @@ class GitGet < Formula
 
   on_linux do
     if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-get/releases/download/v0.4.0/git-get-v0.4.0-linux-amd64.tar.gz"
-      sha256 "7401e885cbd471f49471febe17eae5cde402bcbbf987a54d397e10ca3e17537a"
+      url "https://github.com/arbourd/git-get/releases/download/v0.5.0/git-get-v0.5.0-linux-amd64.tar.gz"
+      sha256 "015ecf2d4d53c3e1f6d12409dd2df1e8afb316dd881b9a8f53a5eaab36491547"
 
       def install
         bin.install "git-get"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-get/releases/download/v0.4.0/git-get-v0.4.0-linux-arm64.tar.gz"
-      sha256 "c9a299586df30392a7a523d5d71484c3496070aae8044c42599d1fb76c602cd4"
+      url "https://github.com/arbourd/git-get/releases/download/v0.5.0/git-get-v0.5.0-linux-arm64.tar.gz"
+      sha256 "89b6bae76645e1530b06c856efd6154945299e4e202a5cd2c5d08e8437074675"
 
       def install
         bin.install "git-get"
