@@ -14,7 +14,13 @@ on:
 
 jobs:
   test:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macOS-latest
 
     env:
       HOMEBREW_GITHUB_ACTIONS: 1
@@ -25,7 +31,6 @@ jobs:
     steps:
       - uses: Homebrew/actions/setup-homebrew@master
         id: set-up-homebrew
-      # - run: brew uninstall go@1.15
 
       - uses: actions/cache@v3
         with:
