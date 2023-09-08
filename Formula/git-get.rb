@@ -46,7 +46,11 @@ class GitGet < Formula
   end
 
   test do
-    assert_match "#{testpath}/src/github.com/arbourd/git-get",
-                 shell_output("#{bin}/git-get github.com/arbourd/git-get")
+    repo = "github.com/arbourd/git-get"
+    assert_match "#{testpath}/src/#{repo}", shell_output("#{bin}/git-get #{repo}")
+
+    cd "#{testpath}/src/#{repo}" do
+      assert_match "https://#{repo}", shell_output("git remote -v")
+    end
   end
 end

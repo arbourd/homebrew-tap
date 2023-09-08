@@ -44,4 +44,16 @@ class GitSync < Formula
       end
     end
   end
+
+  test do
+    system "git", "clone", "https://github.com/arbourd/git-sync.git"
+
+    cd "git-sync" do
+      system "git", "reset", "--hard", "HEAD~1"
+      sha = shell_output("git rev-parse HEAD")
+
+      assert_match sha[0..6], shell_output("#{bin}/git-sync")
+      refute_equal sha, shell_output("git rev-parse HEAD")
+    end
+  end
 end

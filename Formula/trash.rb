@@ -27,6 +27,7 @@ class Trash < Formula
     end
   end
 
+  conflicts_with "macos-trash"
   conflicts_with "trash"
   conflicts_with "trash-cli"
 
