@@ -6,21 +6,44 @@ on:
       - .github/workflows/formula.yml
       - Formula/*.rb
   push:
-    paths:
-      - .github/workflows/formula.yml
-      - Formula/*.rb
     branches:
       - main
 
 jobs:
+  list:
+    runs-on: ubuntu-latest
+    outputs:
+      formulae: ${{ steps.formulae.outputs.result }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/github-script@v6
+        id: formulae
+        with:
+          script: |
+            const globber = await glob.create('Formula/*.rb')
+            const paths = await globber.glob()
+
+            let formulae = paths.map((path, i) => {
+              return path.split('/').pop().replace(/\.rb$/, '')
+            })
+
+            console.log(formulae)
+            return formulae
+
   test:
     runs-on: ${{ matrix.os }}
+    needs: [list]
     strategy:
       fail-fast: false
       matrix:
         os:
+          - macos-latest
           - ubuntu-latest
-          - macOS-latest
+        formula: ${{ fromJson(needs.list.outputs.formulae) }}
+        exclude:
+          - os: ubuntu-latest
+            formula: trash
 
     env:
       HOMEBREW_GITHUB_ACTIONS: 1
@@ -37,8 +60,26 @@ jobs:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
           restore-keys: ${{ runner.os }}-rubygems-
-
       - run: brew install-bundler-gems
-      - run: brew test-bot --tap=arbourd/tap --only-tap-syntax
-      - run: brew test-bot --tap=arbourd/tap --only-formulae
-        if: github.event_name == 'pull_request'
+
+      - if: ${{ matrix.formula == 'go' }}
+        name: brew uninstall go
+        run: |
+          versions=$(brew list | grep -E '^go$|^go@' || true)
+          echo $versions
+
+          for v in $versions
+          do
+            echo "brew uninstall $v"
+            brew uninstall $v
+          done
+
+      - name: brew style ${{ matrix.formula }}
+        run: brew style -v --formula Formula/${{ matrix.formula }}.rb
+
+      - name: brew install ${{ matrix.formula }}
+        run: brew install -v --force --formula Formula/${{ matrix.formula }}.rb
+
+      - name: brew test ${{ matrix.formula }}
+        run: brew test -v Formula/${{ matrix.formula }}.rb
+        if: ${{ matrix.formula != 'trash' }}
