@@ -5,20 +5,20 @@
 class GitSync < Formula
   desc "Updates your branches"
   homepage "https://github.com/arbourd/git-sync"
-  version "0.2.4"
+  version "0.2.5"
 
   on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.4/git-sync-v0.2.4-darwin-arm64.tar.gz"
-      sha256 "5da61f8df376a0e31b32fcd9fdad635292469e43ac781e3f5981896484481dad"
+    if Hardware::CPU.intel?
+      url "https://github.com/arbourd/git-sync/releases/download/v0.2.5/git-sync-v0.2.5-darwin-amd64.tar.gz"
+      sha256 "c02cd2eea89eaaa90224bb4ac9c4a33da6e0b9fa1822f9baa42aee294f633f46"
 
       def install
         bin.install "git-sync"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.4/git-sync-v0.2.4-darwin-amd64.tar.gz"
-      sha256 "7b92d51234f74862291f3f747d51e6e025ab44187b605768ac53b35b28e1bb05"
+    if Hardware::CPU.arm?
+      url "https://github.com/arbourd/git-sync/releases/download/v0.2.5/git-sync-v0.2.5-darwin-arm64.tar.gz"
+      sha256 "bf31e7234db41bcfcfc7f8965989f4da2f969459478a6933eab0db4801a9ebc3"
 
       def install
         bin.install "git-sync"
@@ -27,23 +27,26 @@ class GitSync < Formula
   end
 
   on_linux do
-    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.4/git-sync-v0.2.4-linux-arm64.tar.gz"
-      sha256 "7511a468be2502aa0cc44d96c0053d3c7f50afc792bb27117c999fe80cc00577"
+    if Hardware::CPU.intel?
+      url "https://github.com/arbourd/git-sync/releases/download/v0.2.5/git-sync-v0.2.5-linux-amd64.tar.gz"
+      sha256 "eb4aaf009d6acb6f9f11f240ad00018f1e2d36144e1e6e89ce309e1e42913609"
 
       def install
         bin.install "git-sync"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.4/git-sync-v0.2.4-linux-amd64.tar.gz"
-      sha256 "861309a756f8a2de85de879eceb72d07b90940d1d22ee0c7d0c53d847bd7fa8a"
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+      url "https://github.com/arbourd/git-sync/releases/download/v0.2.5/git-sync-v0.2.5-linux-arm64.tar.gz"
+      sha256 "db0e697af75dcbd05b32b1f027e2a626787e1d1d46cb642f3f8ac85627392358"
 
       def install
         bin.install "git-sync"
       end
     end
   end
+
+  conflicts_with "git-extras"
+  conflicts_with "git-sync"
 
   test do
     system "git", "clone", "https://github.com/arbourd/git-sync.git"
