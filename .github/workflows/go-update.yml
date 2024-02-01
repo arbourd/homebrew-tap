@@ -25,7 +25,7 @@ jobs:
           echo "minor-version=${MINOR_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           branch: go-${{ steps.go.outputs.version }}
           commit-message: Go v${{ steps.go.outputs.version }}
