@@ -30,8 +30,8 @@ type Formula struct {
 type OSArch int
 
 const (
-	DarwinAmd64 OSArch = iota
-	DarwinArm64
+	DarwinArm64 OSArch = iota
+	DarwinAmd64
 	LinuxAmd64
 	LinuxArm64
 	LinuxArm
@@ -90,10 +90,10 @@ func buildFormula(latest Release) Formula {
 			SHA256: f.SHA256,
 		}
 
-		if f.OS == "darwin" && f.Arch == "amd64" {
-			file.OSArch = DarwinAmd64
-		} else if f.OS == "darwin" && f.Arch == "arm64" {
+		if f.OS == "darwin" && f.Arch == "arm64" {
 			file.OSArch = DarwinArm64
+		} else if f.OS == "darwin" && f.Arch == "amd64" {
+			file.OSArch = DarwinAmd64
 		} else if f.OS == "linux" && f.Arch == "amd64" {
 			file.OSArch = LinuxAmd64
 		} else if f.OS == "linux" && f.Arch == "arm64" {
@@ -120,9 +120,9 @@ const tmpl = `class Go < Formula
   version "{{ .Version }}"
 {{ range $f := .Files -}}
 {{- if eq .OSArch 0 }}
-  if OS.mac?
-{{- else if eq .OSArch 1 }}
   if OS.mac? && Hardware::CPU.arm?
+{{- else if eq .OSArch 1 }}
+  if OS.mac? && Hardware::CPU.intel?
 {{- else if eq .OSArch 2 }}
   if OS.linux? && Hardware::CPU.intel?
 {{- else if eq .OSArch 3 }}
@@ -142,19 +142,43 @@ const tmpl = `class Go < Formula
   test do
     (testpath/"hello.go").write <<~EOS
       package main
+
       import "fmt"
+
       func main() {
           fmt.Println("Hello World")
       }
     EOS
+
     # Run go fmt check for no errors then run the program.
     # This is a a bare minimum of go working as it uses fmt, build, and run.
     system bin/"go", "fmt", "hello.go"
     assert_equal "Hello World\n", shell_output("#{bin}/go run hello.go")
 
-    ENV["GOOS"] = "freebsd"
-    ENV["GOARCH"] = "amd64"
-    system bin/"go", "build", "hello.go"
+    with_env(GOOS: "freebsd", GOARCH: "amd64") do
+      system bin/"go", "build", "hello.go"
+    end
+
+    (testpath/"hello_cgo.go").write <<~EOS
+      package main
+
+      /*
+      #include <stdlib.h>
+      #include <stdio.h>
+      void hello() { printf("%s\\n", "Hello from cgo!"); fflush(stdout); }
+      */
+      import "C"
+
+      func main() {
+          C.hello()
+      }
+    EOS
+
+    # Try running a sample using cgo without CC or CXX set to ensure that the
+    # toolchain's default choice of compilers work
+    with_env(CC: nil, CXX: nil) do
+      assert_equal "Hello from cgo!\n", shell_output("#{bin}/go run hello_cgo.go")
+    end
   end
 end
 `

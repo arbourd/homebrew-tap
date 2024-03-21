@@ -3,14 +3,14 @@ class Go < Formula
   homepage "https://go.dev/"
   version "1.22.1"
 
-  if OS.mac?
-    url "https://go.dev/dl/go1.22.1.darwin-amd64.tar.gz"
-    sha256 "3bc971772f4712fec0364f4bc3de06af22a00a12daab10b6f717fdcd13156cc0"
-  end
-
   if OS.mac? && Hardware::CPU.arm?
     url "https://go.dev/dl/go1.22.1.darwin-arm64.tar.gz"
     sha256 "f6a9cec6b8a002fcc9c0ee24ec04d67f430a52abc3cfd613836986bcc00d8383"
+  end
+
+  if OS.mac? && Hardware::CPU.intel?
+    url "https://go.dev/dl/go1.22.1.darwin-amd64.tar.gz"
+    sha256 "3bc971772f4712fec0364f4bc3de06af22a00a12daab10b6f717fdcd13156cc0"
   end
 
   if OS.linux? && Hardware::CPU.intel?
@@ -36,18 +36,42 @@ class Go < Formula
   test do
     (testpath/"hello.go").write <<~EOS
       package main
+
       import "fmt"
+
       func main() {
           fmt.Println("Hello World")
       }
     EOS
+
     # Run go fmt check for no errors then run the program.
     # This is a a bare minimum of go working as it uses fmt, build, and run.
     system bin/"go", "fmt", "hello.go"
     assert_equal "Hello World\n", shell_output("#{bin}/go run hello.go")
 
-    ENV["GOOS"] = "freebsd"
-    ENV["GOARCH"] = "amd64"
-    system bin/"go", "build", "hello.go"
+    with_env(GOOS: "freebsd", GOARCH: "amd64") do
+      system bin/"go", "build", "hello.go"
+    end
+
+    (testpath/"hello_cgo.go").write <<~EOS
+      package main
+
+      /*
+      #include <stdlib.h>
+      #include <stdio.h>
+      void hello() { printf("%s\\n", "Hello from cgo!"); fflush(stdout); }
+      */
+      import "C"
+
+      func main() {
+          C.hello()
+      }
+    EOS
+
+    # Try running a sample using cgo without CC or CXX set to ensure that the
+    # toolchain's default choice of compilers work
+    with_env(CC: nil, CXX: nil) do
+      assert_equal "Hello from cgo!\n", shell_output("#{bin}/go run hello_cgo.go")
+    end
   end
 end
