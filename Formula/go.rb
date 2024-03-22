@@ -3,14 +3,14 @@ class Go < Formula
   homepage "https://go.dev/"
   version "1.22.1"
 
-  if OS.mac? && Hardware::CPU.arm?
-    url "https://go.dev/dl/go1.22.1.darwin-arm64.tar.gz"
-    sha256 "f6a9cec6b8a002fcc9c0ee24ec04d67f430a52abc3cfd613836986bcc00d8383"
-  end
-
   if OS.mac? && Hardware::CPU.intel?
     url "https://go.dev/dl/go1.22.1.darwin-amd64.tar.gz"
     sha256 "3bc971772f4712fec0364f4bc3de06af22a00a12daab10b6f717fdcd13156cc0"
+  end
+
+  if OS.mac? && Hardware::CPU.arm?
+    url "https://go.dev/dl/go1.22.1.darwin-arm64.tar.gz"
+    sha256 "f6a9cec6b8a002fcc9c0ee24ec04d67f430a52abc3cfd613836986bcc00d8383"
   end
 
   if OS.linux? && Hardware::CPU.intel?
