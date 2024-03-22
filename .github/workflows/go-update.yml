@@ -19,10 +19,12 @@ jobs:
       - name: go update
         id: go
         run: |
-          VERSION=$(go run .)
-          MINOR_VERSION=$(echo $VERSION | grep -oP '^\d+\.\d+')
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "minor-version=${MINOR_VERSION}" >> $GITHUB_OUTPUT
+          formula=$(go run .)
+          echo "$formula"
+
+          version=$(echo "$formula" | grep -oP 'version "\K\d+\.\d+\.\d+')
+          echo "$version"
+          echo "version=${version}" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
@@ -31,6 +33,6 @@ jobs:
           commit-message: Go v${{ steps.go.outputs.version }}
           title: Go v${{ steps.go.outputs.version }}
           body: |
-            https://go.dev/doc/devel/release#go${{ steps.go.outputs.minor-version }}
+            https://go.dev/doc/devel/release#go${{ steps.go.outputs.version }}
           reviewers: arbourd
           token: ${{ secrets.GITHUB_TOKEN }}

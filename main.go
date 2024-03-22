@@ -64,18 +64,11 @@ func main() {
 	}
 	formula := buildFormula(r[0])
 
-	f, err := os.Create("./Formula/go.rb")
-	if err != nil {
-		log.Fatal(fmt.Errorf("cannot open file: %s", err))
-	}
-
 	t := template.Must(template.New("formula").Parse(tmpl))
-	err = t.Execute(f, formula)
+	err = t.Execute(os.Stdout, formula)
 	if err != nil {
-		log.Fatal(fmt.Errorf("cannot write file: %s", err))
+		log.Fatal(fmt.Errorf("cannot write to stdout: %s", err))
 	}
-
-	fmt.Println(formula.Version)
 }
 
 func buildFormula(latest Release) Formula {
