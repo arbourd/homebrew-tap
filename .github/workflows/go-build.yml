@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          cache: true
+          cache: false
           go-version-file: go.mod
 
       - run: go build .
