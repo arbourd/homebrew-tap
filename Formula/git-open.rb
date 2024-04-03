@@ -46,4 +46,17 @@ class GitOpen < Formula
   end
 
   conflicts_with "git-open"
+
+  test do
+    system "git", "clone", "https://github.com/arbourd/git-open.git"
+
+    cd "git-open" do
+      assert_match "Opening https://github.com/arbourd/git-open",
+                   shell_output("#{bin}/git-open")
+      assert_match "Opening https://github.com/arbourd/git-open/tree/main/LICENSE",
+                   shell_output("#{bin}/git-open LICENSE")
+      assert_match "Opening https://github.com/arbourd/git-open/commit/71e081deeb92764e1bae203419ac72de1d935d2f",
+                   shell_output("#{bin}/git-open 71e081deeb92764e1bae203419ac72de1d935d2f")
+    end
+  end
 end
