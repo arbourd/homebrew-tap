@@ -1,6 +1,12 @@
 name: go
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/go-update.yml
+  push:
+    paths:
+      - .github/workflows/go-update.yml
   workflow_dispatch:
   schedule:
     - cron: "0 * * * *"
@@ -16,17 +22,24 @@ jobs:
           cache: false
           go-version-file: go.mod
 
-      - name: go update
+      - name: Run go update
         id: go
         run: |
+          echo "Generating Go formula"
           formula=$(go run .)
-          echo "$formula"
 
+          echo "::group::formula"
+          echo "${formula}"
+          echo "::endgroup::"
+
+          echo "${formula}" > Formula/go.rb
           version=$(echo "$formula" | grep -oP 'version "\K\d+\.\d+\.\d+')
-          echo "$version"
+
+          echo "version=$version"
           echo "version=${version}" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
+        if: github.event_name != 'pull_request'
         uses: peter-evans/create-pull-request@v7
         with:
           branch: go-${{ steps.go.outputs.version }}
