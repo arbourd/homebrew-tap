@@ -1,31 +1,31 @@
 class Go < Formula
   desc "Open source programming language to build simple/reliable/efficient software"
   homepage "https://go.dev/"
-  version "1.25.1"
+  version "1.25.2"
 
   if OS.mac? && Hardware::CPU.intel?
-    url "https://go.dev/dl/go1.25.1.darwin-amd64.tar.gz"
-    sha256 "1d622468f767a1b9fe1e1e67bd6ce6744d04e0c68712adc689748bbeccb126bb"
+    url "https://go.dev/dl/go1.25.2.darwin-amd64.tar.gz"
+    sha256 "95493abb01da81638ab5083ff3f97e8f923cb42a64c2e16728e3cf5b0cd3fc5a"
   end
 
   if OS.mac? && Hardware::CPU.arm?
-    url "https://go.dev/dl/go1.25.1.darwin-arm64.tar.gz"
-    sha256 "68deebb214f39d542e518ebb0598a406ab1b5a22bba8ec9ade9f55fb4dd94a6c"
+    url "https://go.dev/dl/go1.25.2.darwin-arm64.tar.gz"
+    sha256 "d1ade1b480e51b6269b6e65856c602aed047e1f0d32fffef7eebbd7faa8d7687"
   end
 
   if OS.linux? && Hardware::CPU.intel?
-    url "https://go.dev/dl/go1.25.1.linux-amd64.tar.gz"
-    sha256 "7716a0d940a0f6ae8e1f3b3f4f36299dc53e31b16840dbd171254312c41ca12e"
+    url "https://go.dev/dl/go1.25.2.linux-amd64.tar.gz"
+    sha256 "d7fa7f8fbd16263aa2501d681b11f972a5fd8e811f7b10cb9b26d031a3d7454b"
   end
 
   if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-    url "https://go.dev/dl/go1.25.1.linux-arm64.tar.gz"
-    sha256 "65a3e34fb2126f55b34e1edfc709121660e1be2dee6bdf405fc399a63a95a87d"
+    url "https://go.dev/dl/go1.25.2.linux-arm64.tar.gz"
+    sha256 "9aaeb044bf8dbf50ca2fbf0edc5ebc98b90d5bda8c6b2911526df76f61232919"
   end
 
   if OS.linux? && Hardware::CPU.arm? && !Hardware::CPU.is_64_bit?
-    url "https://go.dev/dl/go1.25.1.linux-armv6l.tar.gz"
-    sha256 "eb949be683e82a99e9861dafd7057e31ea40b161eae6c4cd18fdc0e8c4ae6225"
+    url "https://go.dev/dl/go1.25.2.linux-armv6l.tar.gz"
+    sha256 "63572d476f02c1f1049e11c42cb2017eb7b241187e219a004e83202a4a17d21e"
   end
 
   def install
