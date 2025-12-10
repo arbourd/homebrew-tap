@@ -40,7 +40,7 @@ jobs:
 
       - name: Create Pull Request
         if: github.event_name != 'pull_request'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: go-${{ steps.go.outputs.version }}
           commit-message: Go v${{ steps.go.outputs.version }}
