@@ -6,11 +6,13 @@ on:
       - .github/workflows/go-build.yml
       - go.*
       - main.go
+      - main_test.go
   push:
     paths:
       - .github/workflows/go-build.yml
       - go.*
       - main.go
+      - main_test.go
     branches:
       - main
 
@@ -25,5 +27,7 @@ jobs:
           cache: false
           go-version-file: go.mod
 
+      - run: go vet ./...
       - run: go build .
+      - run: go test ./... -race
       - run: go run .

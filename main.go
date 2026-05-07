@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -11,15 +10,17 @@ import (
 	"text/template"
 )
 
+type ReleaseFile struct {
+	Filename string `json:"filename"`
+	OS       string `json:"os"`
+	Arch     string `json:"arch"`
+	SHA256   string `json:"sha256"`
+	Kind     string `json:"kind"`
+}
+
 type Release struct {
-	Version string `json:"version"`
-	Files   []struct {
-		Filename string `json:"filename"`
-		OS       string `json:"os"`
-		Arch     string `json:"arch"`
-		SHA256   string `json:"sha256"`
-		Kind     string `json:"kind"`
-	} `json:"files"`
+	Version string        `json:"version"`
+	Files   []ReleaseFile `json:"files"`
 }
 
 type Formula struct {
@@ -46,28 +47,34 @@ type File struct {
 
 const URL = "https://go.dev/dl/"
 
+var osArchMap = map[string]map[string]OSArch{
+	"darwin": {"arm64": DarwinArm64, "amd64": DarwinAmd64},
+	"linux":  {"amd64": LinuxAmd64, "arm64": LinuxArm64, "armv6l": LinuxArm},
+}
+
 func main() {
 	res, err := http.Get(URL + "?mode=json")
 	if err != nil {
-		log.Fatal(fmt.Errorf("cannot get Go release: %s", err))
+		log.Fatalf("cannot get Go release: %v", err)
 	}
+	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Fatal(fmt.Errorf("cannot parse response body: %s", err))
+		log.Fatalf("cannot parse response body: %v", err)
 	}
 
 	r := []Release{}
 	err = json.Unmarshal(body, &r)
 	if err != nil {
-		log.Fatal(fmt.Errorf("cannot unmarshal JSON: %s", err))
+		log.Fatalf("cannot unmarshal JSON: %v", err)
 	}
 	formula := buildFormula(r[0])
 
 	t := template.Must(template.New("formula").Parse(tmpl))
 	err = t.Execute(os.Stdout, formula)
 	if err != nil {
-		log.Fatal(fmt.Errorf("cannot write to stdout: %s", err))
+		log.Fatalf("cannot write to stdout: %v", err)
 	}
 }
 
@@ -78,26 +85,16 @@ func buildFormula(latest Release) Formula {
 			continue
 		}
 
-		file := File{
-			URL:    URL + f.Filename,
-			SHA256: f.SHA256,
-		}
-
-		if f.OS == "darwin" && f.Arch == "arm64" {
-			file.OSArch = DarwinArm64
-		} else if f.OS == "darwin" && f.Arch == "amd64" {
-			file.OSArch = DarwinAmd64
-		} else if f.OS == "linux" && f.Arch == "amd64" {
-			file.OSArch = LinuxAmd64
-		} else if f.OS == "linux" && f.Arch == "arm64" {
-			file.OSArch = LinuxArm64
-		} else if f.OS == "linux" && f.Arch == "armv6l" {
-			file.OSArch = LinuxArm
-		} else {
+		osArch, ok := osArchMap[f.OS][f.Arch]
+		if !ok {
 			continue
 		}
 
-		formula.Files = append(formula.Files, file)
+		formula.Files = append(formula.Files, File{
+			URL:    URL + f.Filename,
+			SHA256: f.SHA256,
+			OSArch: osArch,
+		})
 	}
 
 	return formula
