@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"text/template"
 )
@@ -71,11 +71,23 @@ func main() {
 	}
 	formula := buildFormula(r[0])
 
-	t := template.Must(template.New("formula").Parse(tmpl))
-	err = t.Execute(os.Stdout, formula)
+	s, err := renderFormula(formula)
 	if err != nil {
-		log.Fatalf("cannot write to stdout: %v", err)
+		log.Fatalf("cannot render formula: %v", err)
 	}
+	fmt.Print(s)
+}
+
+func renderFormula(formula Formula) (string, error) {
+	t, err := template.New("formula").Parse(tmpl)
+	if err != nil {
+		return "", err
+	}
+	var buf strings.Builder
+	if err := t.Execute(&buf, formula); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 func buildFormula(latest Release) Formula {
@@ -100,6 +112,8 @@ func buildFormula(latest Release) Formula {
 	return formula
 }
 
+// processVersion strips the "go" prefix from the version string.
+// Vestigial from the original go formula, kept for compatibility.
 func processVersion(v string) string {
 	return strings.TrimPrefix(v, "go")
 }

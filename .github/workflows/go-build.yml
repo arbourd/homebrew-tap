@@ -29,5 +29,5 @@ jobs:
 
       - run: go vet ./...
       - run: go build .
-      - run: go test ./... -race
+      - run: go test ./... -v -race
       - run: go run .

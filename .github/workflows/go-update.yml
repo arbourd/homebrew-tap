@@ -25,7 +25,6 @@ jobs:
       - name: Run go update
         id: go
         run: |
-          echo "Generating Go formula"
           formula=$(go run .)
 
           echo "::group::formula"
@@ -33,9 +32,8 @@ jobs:
           echo "::endgroup::"
 
           echo "${formula}" > Formula/go.rb
-          version=$(echo "$formula" | grep -oP 'version "\K\d+\.\d+\.\d+')
+          version=$(echo "$formula" | grep -oP 'version "\K[\d.]+')
 
-          echo "version=$version"
           echo "version=${version}" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request

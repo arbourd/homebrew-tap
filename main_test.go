@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -17,6 +19,36 @@ func TestProcessVersion(t *testing.T) {
 		got := processVersion(tt.input)
 		if got != tt.want {
 			t.Errorf("processVersion(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestRenderFormula(t *testing.T) {
+	formula := Formula{
+		Version: "1.26.2",
+		Files: []File{
+			{URL: "https://go.dev/dl/go1.26.2.darwin-arm64.tar.gz", SHA256: "aaa", OSArch: DarwinArm64},
+			{URL: "https://go.dev/dl/go1.26.2.linux-amd64.tar.gz", SHA256: "bbb", OSArch: LinuxAmd64},
+		},
+	}
+
+	got, err := renderFormula(formula)
+	if err != nil {
+		t.Fatalf("renderFormula() error: %v", err)
+	}
+
+	checks := []string{
+		`version "1.26.2"`,
+		`OS.mac? && Hardware::CPU.arm?`,
+		`url "https://go.dev/dl/go1.26.2.darwin-arm64.tar.gz"`,
+		`sha256 "aaa"`,
+		`OS.linux? && Hardware::CPU.intel?`,
+		`url "https://go.dev/dl/go1.26.2.linux-amd64.tar.gz"`,
+		`sha256 "bbb"`,
+	}
+	for _, want := range checks {
+		if !strings.Contains(got, want) {
+			t.Errorf("renderFormula() missing %q", want)
 		}
 	}
 }
@@ -56,15 +88,17 @@ func TestBuildFormula(t *testing.T) {
 		{LinuxArm, "eee"},
 	}
 	for i, w := range want {
-		f := formula.Files[i]
-		if f.OSArch != w.osarch {
-			t.Errorf("Files[%d].OSArch = %d, want %d", i, f.OSArch, w.osarch)
-		}
-		if f.SHA256 != w.sha256 {
-			t.Errorf("Files[%d].SHA256 = %q, want %q", i, f.SHA256, w.sha256)
-		}
-		if f.URL != URL+formula.Files[i].URL[len(URL):] {
-			t.Errorf("Files[%d].URL does not start with base URL", i)
-		}
+		t.Run(fmt.Sprintf("file[%d]", i), func(t *testing.T) {
+			f := formula.Files[i]
+			if f.OSArch != w.osarch {
+				t.Errorf("OSArch = %d, want %d", f.OSArch, w.osarch)
+			}
+			if f.SHA256 != w.sha256 {
+				t.Errorf("SHA256 = %q, want %q", f.SHA256, w.sha256)
+			}
+			if !strings.HasPrefix(f.URL, URL) {
+				t.Errorf("URL %q does not start with base URL %q", f.URL, URL)
+			}
+		})
 	}
 }
