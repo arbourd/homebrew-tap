@@ -5,42 +5,56 @@
 class GitGet < Formula
   desc "Go gets your code"
   homepage "https://github.com/arbourd/git-get"
-  version "0.6.1"
+  version "1.0.0"
 
   on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/arbourd/git-get/releases/download/v0.6.1/git-get-v0.6.1-darwin-arm64.tar.gz"
-      sha256 "738031ff3f32075d33333646533eed4d7016a2c154b1f9a1ea5a3ff01873b5d5"
+    if Hardware::CPU.intel?
+      url "https://github.com/arbourd/git-get/releases/download/v1.0.0/git-get-v1.0.0-darwin-amd64.tar.gz"
+      sha256 "42293fe70b9b66c107ff3851c6516aba67aef3afe8bcb98475ae86715896c2a2"
 
-      def install
+      define_method(:install) do
         bin.install "git-get"
+        man1.install "man/git-get.1"
+        bash_completion.install "completions/git-get.bash" => "git-get"
+        zsh_completion.install "completions/git-get.zsh" => "_git_get"
+        fish_completion.install "completions/git-get.fish"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-get/releases/download/v0.6.1/git-get-v0.6.1-darwin-amd64.tar.gz"
-      sha256 "8641dd1e9f8405b69e7829ac589b3aa46225981b5d9c0a4e9229ab89759ac36e"
+    if Hardware::CPU.arm?
+      url "https://github.com/arbourd/git-get/releases/download/v1.0.0/git-get-v1.0.0-darwin-arm64.tar.gz"
+      sha256 "caf8cd70cf7878fe1e781ac3f8040f60753046a30a8450610cd31c84e835fa95"
 
-      def install
+      define_method(:install) do
         bin.install "git-get"
+        man1.install "man/git-get.1"
+        bash_completion.install "completions/git-get.bash" => "git-get"
+        zsh_completion.install "completions/git-get.zsh" => "_git_get"
+        fish_completion.install "completions/git-get.fish"
       end
     end
   end
 
   on_linux do
-    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-get/releases/download/v0.6.1/git-get-v0.6.1-linux-arm64.tar.gz"
-      sha256 "492b60f9940ca49c1e76edf40011201fdd98983ea4ec578de70291ade3a5d988"
-
-      def install
+    if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
+      url "https://github.com/arbourd/git-get/releases/download/v1.0.0/git-get-v1.0.0-linux-amd64.tar.gz"
+      sha256 "2d8e0e3da2765964c83796f70f43621751ba74629aaa4b6509680a003b4415ee"
+      define_method(:install) do
         bin.install "git-get"
+        man1.install "man/git-get.1"
+        bash_completion.install "completions/git-get.bash" => "git-get"
+        zsh_completion.install "completions/git-get.zsh" => "_git_get"
+        fish_completion.install "completions/git-get.fish"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-get/releases/download/v0.6.1/git-get-v0.6.1-linux-amd64.tar.gz"
-      sha256 "773600cb4e04a943433ca7db50d8b6121370364edb826496b5e1c17b3a4dc625"
-
-      def install
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+      url "https://github.com/arbourd/git-get/releases/download/v1.0.0/git-get-v1.0.0-linux-arm64.tar.gz"
+      sha256 "767033524fad4a1e95432394b29d4f1004f06ce220d78c874301d3875e22758c"
+      define_method(:install) do
         bin.install "git-get"
+        man1.install "man/git-get.1"
+        bash_completion.install "completions/git-get.bash" => "git-get"
+        zsh_completion.install "completions/git-get.zsh" => "_git_get"
+        fish_completion.install "completions/git-get.fish"
       end
     end
   end
