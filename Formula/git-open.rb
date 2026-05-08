@@ -5,41 +5,39 @@
 class GitOpen < Formula
   desc "Opens your Git repository in your browser"
   homepage "https://github.com/arbourd/git-open"
-  version "0.2.0"
+  version "0.3.0"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-open/releases/download/v0.2.0/git-open-v0.2.0-darwin-amd64.tar.gz"
-      sha256 "dd001c4e42dcfa38d815cc0022998bc9a3ea398e2f40a7b1eb41dce2d231e3d9"
+      url "https://github.com/arbourd/git-open/releases/download/v0.3.0/git-open-v0.3.0-darwin-amd64.tar.gz"
+      sha256 "368851e0054a37d86e328cee37f02630f3140709f89bb75039c03e049d6f8350"
 
-      def install
+      define_method(:install) do
         bin.install "git-open"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/arbourd/git-open/releases/download/v0.2.0/git-open-v0.2.0-darwin-arm64.tar.gz"
-      sha256 "0c51d6867d0a483064962f0c755d99ef314443555ec7abe5c85fd29b707cab97"
+      url "https://github.com/arbourd/git-open/releases/download/v0.3.0/git-open-v0.3.0-darwin-arm64.tar.gz"
+      sha256 "b0c627607bdcc105129a808518032bd765298d0b41d776bd2ece3030c63beb54"
 
-      def install
+      define_method(:install) do
         bin.install "git-open"
       end
     end
   end
 
   on_linux do
-    if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-open/releases/download/v0.2.0/git-open-v0.2.0-linux-amd64.tar.gz"
-      sha256 "8068cbe02c27189d3818b27bd6055c857ce265212d9b9b9b522993d8cec70f2c"
-
-      def install
+    if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
+      url "https://github.com/arbourd/git-open/releases/download/v0.3.0/git-open-v0.3.0-linux-amd64.tar.gz"
+      sha256 "c1b64ad2ebfdc9acfb92d98e64b03b20365a411c1d7b440396da211ddee94087"
+      define_method(:install) do
         bin.install "git-open"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-open/releases/download/v0.2.0/git-open-v0.2.0-linux-arm64.tar.gz"
-      sha256 "1856f2518398c34595491cf3e4c95f95c5b3efc55d114531ec97f81b1d1a0a98"
-
-      def install
+      url "https://github.com/arbourd/git-open/releases/download/v0.3.0/git-open-v0.3.0-linux-arm64.tar.gz"
+      sha256 "6d55405dbc9d4a8d3f68403e102b8f9d3ab6451cba82b640e64d0ddaffb697a2"
+      define_method(:install) do
         bin.install "git-open"
       end
     end
