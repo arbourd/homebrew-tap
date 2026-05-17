@@ -5,12 +5,12 @@
 class GitGet < Formula
   desc "Go gets your code"
   homepage "https://github.com/arbourd/git-get"
-  version "1.0.0"
+  version "1.1.0"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-get/releases/download/v1.0.0/git-get-v1.0.0-darwin-amd64.tar.gz"
-      sha256 "42293fe70b9b66c107ff3851c6516aba67aef3afe8bcb98475ae86715896c2a2"
+      url "https://github.com/arbourd/git-get/releases/download/v1.1.0/git-get-v1.1.0-darwin-amd64.tar.gz"
+      sha256 "04a37cc5eaf85339eb38a711874d02a3b6c1558f430dc0f01921a331edf11d58"
 
       define_method(:install) do
         bin.install "git-get"
@@ -21,8 +21,8 @@ class GitGet < Formula
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/arbourd/git-get/releases/download/v1.0.0/git-get-v1.0.0-darwin-arm64.tar.gz"
-      sha256 "caf8cd70cf7878fe1e781ac3f8040f60753046a30a8450610cd31c84e835fa95"
+      url "https://github.com/arbourd/git-get/releases/download/v1.1.0/git-get-v1.1.0-darwin-arm64.tar.gz"
+      sha256 "507a9736c3b9ebe289a5e2a65798a4d5f89068454d5a70768602eef4309f24e3"
 
       define_method(:install) do
         bin.install "git-get"
@@ -36,8 +36,8 @@ class GitGet < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-get/releases/download/v1.0.0/git-get-v1.0.0-linux-amd64.tar.gz"
-      sha256 "2d8e0e3da2765964c83796f70f43621751ba74629aaa4b6509680a003b4415ee"
+      url "https://github.com/arbourd/git-get/releases/download/v1.1.0/git-get-v1.1.0-linux-amd64.tar.gz"
+      sha256 "987a9303faaf38fc95964fc4f5ca33d0af840adbfcca0cc5a0b4234ee8397a28"
       define_method(:install) do
         bin.install "git-get"
         man1.install "man/git-get.1"
@@ -47,8 +47,8 @@ class GitGet < Formula
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-get/releases/download/v1.0.0/git-get-v1.0.0-linux-arm64.tar.gz"
-      sha256 "767033524fad4a1e95432394b29d4f1004f06ce220d78c874301d3875e22758c"
+      url "https://github.com/arbourd/git-get/releases/download/v1.1.0/git-get-v1.1.0-linux-arm64.tar.gz"
+      sha256 "b383c0210e38f69e1a827eed8a370b788a07d502cd28799f214bb19825bd60df"
       define_method(:install) do
         bin.install "git-get"
         man1.install "man/git-get.1"
