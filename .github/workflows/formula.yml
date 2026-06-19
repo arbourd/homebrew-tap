@@ -16,7 +16,7 @@ jobs:
       formulae: ${{ steps.formulae.outputs.result }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/github-script@v9
         id: formulae
         with:
