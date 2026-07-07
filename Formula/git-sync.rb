@@ -12,7 +12,7 @@ class GitSync < Formula
       url "https://github.com/arbourd/git-sync/releases/download/v0.2.6/git-sync-v0.2.6-darwin-amd64.tar.gz"
       sha256 "4a4df235d650b766d4901db873f67e48e391e5e8b8784545f349f1bee6c332e7"
 
-      def install
+      define_method(:install) do
         bin.install "git-sync"
       end
     end
@@ -20,24 +20,24 @@ class GitSync < Formula
       url "https://github.com/arbourd/git-sync/releases/download/v0.2.6/git-sync-v0.2.6-darwin-arm64.tar.gz"
       sha256 "45ad6fab2868ac1e043f410bb1c67d572bd832078f677209b1a70a8af55475d5"
 
-      def install
+      define_method(:install) do
         bin.install "git-sync"
       end
     end
   end
 
   on_linux do
-    if Hardware::CPU.intel? and Hardware::CPU.is_64_bit?
+    if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
       url "https://github.com/arbourd/git-sync/releases/download/v0.2.6/git-sync-v0.2.6-linux-amd64.tar.gz"
       sha256 "d3ee6a6d3378d03620b8ed2f7aca5d8ddfd626ac54593c66f45be86674cdb610"
-      def install
+      define_method(:install) do
         bin.install "git-sync"
       end
     end
-    if Hardware::CPU.arm? and Hardware::CPU.is_64_bit?
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/arbourd/git-sync/releases/download/v0.2.6/git-sync-v0.2.6-linux-arm64.tar.gz"
       sha256 "4a153886e2e0a203304120eaf1359b08cedcdda2d272f233d8154035cd2748b5"
-      def install
+      define_method(:install) do
         bin.install "git-sync"
       end
     end

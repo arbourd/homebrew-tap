@@ -52,15 +52,15 @@ jobs:
       HOMEBREW_NO_INSTALL_CLEANUP: 1
 
     steps:
-      - uses: Homebrew/actions/setup-homebrew@master
+      - uses: actions/checkout@v7
+
+      - uses: Homebrew/actions/setup-homebrew@main
         id: set-up-homebrew
 
-      - uses: actions/cache@v6
-        with:
-          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ runner.os }}-rubygems-
-      - run: brew install-bundler-gems
+      - name: Tap repository
+        run: |
+          mkdir -p "$(brew --repository)/Library/Taps/arbourd"
+          ln -s "$PWD" "$(brew --repository)/Library/Taps/arbourd/homebrew-tap"
 
       - if: ${{ matrix.formula == 'go' }}
         name: brew uninstall go
@@ -75,11 +75,11 @@ jobs:
           done
 
       - name: brew style ${{ matrix.formula }}
-        run: brew style -v --formula Formula/${{ matrix.formula }}.rb
+        run: brew style -v arbourd/tap/${{ matrix.formula }}
 
       - name: brew install ${{ matrix.formula }}
-        run: brew install -v --force --formula Formula/${{ matrix.formula }}.rb
+        run: brew install -v arbourd/tap/${{ matrix.formula }}
 
       - name: brew test ${{ matrix.formula }}
-        run: brew test -v Formula/${{ matrix.formula }}.rb
+        run: brew test -v arbourd/tap/${{ matrix.formula }}
         if: ${{ matrix.formula != 'trash' }}
