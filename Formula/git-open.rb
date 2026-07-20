@@ -5,20 +5,20 @@
 class GitOpen < Formula
   desc "Opens your Git repository in your browser"
   homepage "https://github.com/arbourd/git-open"
-  version "1.0.0"
+  version "1.1.0"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-open/releases/download/v1.0.0/git-open-v1.0.0-darwin-amd64.tar.gz"
-      sha256 "f0b030f701429692d03fa9abcc0905609d04a16cdd1b61b853d91bc0e5196403"
+      url "https://github.com/arbourd/git-open/releases/download/v1.1.0/git-open-v1.1.0-darwin-amd64.tar.gz"
+      sha256 "1d1c9e8d526017e9a4f04fbeeec4c0ef91c3f806682770695bf610ef104a3bb5"
 
       define_method(:install) do
         bin.install "git-open"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/arbourd/git-open/releases/download/v1.0.0/git-open-v1.0.0-darwin-arm64.tar.gz"
-      sha256 "28cb506dcaa0c2d6feec2621978270367f5bf0df98bec2f06208559892fb0d42"
+      url "https://github.com/arbourd/git-open/releases/download/v1.1.0/git-open-v1.1.0-darwin-arm64.tar.gz"
+      sha256 "b60434ff5adadbccde5ed236a8c2709618dc173d126224bf47df73c3009f6ad6"
 
       define_method(:install) do
         bin.install "git-open"
@@ -28,15 +28,15 @@ class GitOpen < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-open/releases/download/v1.0.0/git-open-v1.0.0-linux-amd64.tar.gz"
-      sha256 "876e3f01f6a5d6e2b1a08265ded5a50032ecf429796b74c9d10fc77a863d8609"
+      url "https://github.com/arbourd/git-open/releases/download/v1.1.0/git-open-v1.1.0-linux-amd64.tar.gz"
+      sha256 "e7800181bd279d646c4be0d66d5ac81e5b66fa4a7b96e1f7a6ae6cb46cf9745c"
       define_method(:install) do
         bin.install "git-open"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-open/releases/download/v1.0.0/git-open-v1.0.0-linux-arm64.tar.gz"
-      sha256 "2e8f04fa9f948d49ecad78a67af9031afd2cc4727584668cdadec5815d75cf3e"
+      url "https://github.com/arbourd/git-open/releases/download/v1.1.0/git-open-v1.1.0-linux-arm64.tar.gz"
+      sha256 "d7eb109d8bf73c280627907a8dd1d51029a83ce75a3a633e6f56402297480ac0"
       define_method(:install) do
         bin.install "git-open"
       end
@@ -50,11 +50,11 @@ class GitOpen < Formula
 
     cd "git-open" do
       assert_match "Opening https://github.com/arbourd/git-open",
-                  shell_output("#{bin}/git-open")
-      assert_match "Opening https://github.com/arbourd/git-open/tree/main/LICENSE",
-                  shell_output("#{bin}/git-open LICENSE")
+                   shell_output("#{bin}/git-open")
+      assert_match "Opening https://github.com/arbourd/git-open/tree/main/main.go",
+                   shell_output("#{bin}/git-open main.go")
       assert_match "Opening https://github.com/arbourd/git-open/commit/71e081deeb92764e1bae203419ac72de1d935d2f",
-                  shell_output("#{bin}/git-open 71e081deeb92764e1bae203419ac72de1d935d2f")
+                   shell_output("#{bin}/git-open 71e081deeb92764e1bae203419ac72de1d935d2f")
     end
   end
 end
