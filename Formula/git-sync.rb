@@ -5,20 +5,20 @@
 class GitSync < Formula
   desc "Updates your branches"
   homepage "https://github.com/arbourd/git-sync"
-  version "0.2.6"
+  version "0.3.0"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.6/git-sync-v0.2.6-darwin-amd64.tar.gz"
-      sha256 "4a4df235d650b766d4901db873f67e48e391e5e8b8784545f349f1bee6c332e7"
+      url "https://github.com/arbourd/git-sync/releases/download/v0.3.0/git-sync-v0.3.0-darwin-amd64.tar.gz"
+      sha256 "565414dfbee646ff496e04a6600d829fe11c8bf40a2fea718060214dd6751236"
 
       define_method(:install) do
         bin.install "git-sync"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.6/git-sync-v0.2.6-darwin-arm64.tar.gz"
-      sha256 "45ad6fab2868ac1e043f410bb1c67d572bd832078f677209b1a70a8af55475d5"
+      url "https://github.com/arbourd/git-sync/releases/download/v0.3.0/git-sync-v0.3.0-darwin-arm64.tar.gz"
+      sha256 "a9e67276daa30b7cdc40e519396c4073f8b6274ab3f50fb2e46585d37f95307c"
 
       define_method(:install) do
         bin.install "git-sync"
@@ -28,15 +28,15 @@ class GitSync < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.6/git-sync-v0.2.6-linux-amd64.tar.gz"
-      sha256 "d3ee6a6d3378d03620b8ed2f7aca5d8ddfd626ac54593c66f45be86674cdb610"
+      url "https://github.com/arbourd/git-sync/releases/download/v0.3.0/git-sync-v0.3.0-linux-amd64.tar.gz"
+      sha256 "06d44f442e2eba9762d0db1ed7e32f6af1fee87586c0d5ed41fca4dc978cf8c0"
       define_method(:install) do
         bin.install "git-sync"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/arbourd/git-sync/releases/download/v0.2.6/git-sync-v0.2.6-linux-arm64.tar.gz"
-      sha256 "4a153886e2e0a203304120eaf1359b08cedcdda2d272f233d8154035cd2748b5"
+      url "https://github.com/arbourd/git-sync/releases/download/v0.3.0/git-sync-v0.3.0-linux-arm64.tar.gz"
+      sha256 "36f4ef3fcfda04fbb1d0415efe3a14ddb9abd89c9099c5f538b7e89f6ab38c01"
       define_method(:install) do
         bin.install "git-sync"
       end
