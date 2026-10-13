@@ -5,14 +5,12 @@ on:
     paths:
       - .github/workflows/go-build.yml
       - go.*
-      - main.go
-      - main_test.go
+      - tools/go/**
   push:
     paths:
       - .github/workflows/go-build.yml
       - go.*
-      - main.go
-      - main_test.go
+      - tools/go/**
     branches:
       - main
 
@@ -28,6 +26,5 @@ jobs:
           go-version-file: go.mod
 
       - run: go vet ./...
-      - run: go build .
       - run: go test ./... -v -race
-      - run: go run .
+      - run: go run ./tools/go
