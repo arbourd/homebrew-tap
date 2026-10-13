@@ -45,6 +45,23 @@ type File struct {
 	OSArch OSArch
 }
 
+// Condition returns the Homebrew condition that selects the platform.
+func (o OSArch) Condition() string {
+	switch o {
+	case DarwinArm64:
+		return "OS.mac? && Hardware::CPU.arm?"
+	case DarwinAmd64:
+		return "OS.mac? && Hardware::CPU.intel?"
+	case LinuxAmd64:
+		return "OS.linux? && Hardware::CPU.intel?"
+	case LinuxArm64:
+		return "OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?"
+	case LinuxArm:
+		return "OS.linux? && Hardware::CPU.arm? && !Hardware::CPU.is_64_bit?"
+	}
+	panic(fmt.Sprintf("unknown OSArch %d", int(o)))
+}
+
 const URL = "https://go.dev/dl/"
 
 var osArchMap = map[string]map[string]OSArch{
@@ -129,18 +146,8 @@ const tmpl = `class Go < Formula
   desc "Open source programming language to build simple/reliable/efficient software"
   homepage "https://go.dev/"
   version "{{ .Version }}"
-{{ range $f := .Files -}}
-{{- if eq .OSArch 0 }}
-  if OS.mac? && Hardware::CPU.arm?
-{{- else if eq .OSArch 1 }}
-  if OS.mac? && Hardware::CPU.intel?
-{{- else if eq .OSArch 2 }}
-  if OS.linux? && Hardware::CPU.intel?
-{{- else if eq .OSArch 3 }}
-  if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-{{- else if eq .OSArch 4 }}
-  if OS.linux? && Hardware::CPU.arm? && !Hardware::CPU.is_64_bit?
-{{- end }}
+{{ range $f := .Files }}
+  if {{ $f.OSArch.Condition }}
     url "{{ $f.URL }}"
     sha256 "{{ $f.SHA256 }}"
   end
