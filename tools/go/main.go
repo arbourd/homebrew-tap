@@ -59,6 +59,10 @@ func main() {
 	}
 	defer res.Body.Close()
 
+	if res.StatusCode != http.StatusOK {
+		log.Fatalf("cannot get Go release: unexpected status %s", res.Status)
+	}
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Fatalf("cannot parse response body: %v", err)
@@ -68,6 +72,9 @@ func main() {
 	err = json.Unmarshal(body, &r)
 	if err != nil {
 		log.Fatalf("cannot unmarshal JSON: %v", err)
+	}
+	if len(r) == 0 {
+		log.Fatalf("no Go releases found")
 	}
 	formula := buildFormula(r[0])
 
