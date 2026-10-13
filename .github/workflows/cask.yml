@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   list:
     runs-on: ubuntu-latest
@@ -24,9 +27,7 @@ jobs:
             const globber = await glob.create('Casks/*.rb')
             const paths = await globber.glob()
 
-            let casks = paths.map((path, i) => {
-              return path.split('/').pop().replace(/\.rb$/, '')
-            })
+            const casks = paths.map((path) => path.split('/').pop().replace(/\.rb$/, ''))
 
             console.log(casks)
             return casks
@@ -48,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: Homebrew/actions/setup-homebrew@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # main
+      - uses: Homebrew/actions/setup-homebrew@2026.10.12.1
 
       - name: Tap repository
         run: |
@@ -59,17 +60,27 @@ jobs:
         run: brew style --cask -v arbourd/tap/${{ matrix.cask }}
 
       - name: brew audit ${{ matrix.cask }}
-        run: brew audit --cask --online arbourd/tap/${{ matrix.cask }}
+        run: brew audit --cask --strict --online arbourd/tap/${{ matrix.cask }}
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: brew livecheck ${{ matrix.cask }}
         run: brew livecheck --cask arbourd/tap/${{ matrix.cask }}
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: brew install ${{ matrix.cask }}
         run: brew install --cask -v arbourd/tap/${{ matrix.cask }}
 
-      - name: check app installed
-        if: ${{ matrix.cask == 'orca' }}
-        run: test -d /Applications/Orca.app
+      - name: check apps installed
+        run: |
+          set -o pipefail
+          brew info --cask --json=v2 arbourd/tap/${{ matrix.cask }} \
+            | jq -r '.casks[].artifacts[] | select(.app) | .app[] | if type == "object" then .target else . end' \
+            | while IFS= read -r app; do
+                echo "checking /Applications/$app"
+                test -d "/Applications/$app"
+              done
 
       - name: brew uninstall ${{ matrix.cask }}
         run: brew uninstall --cask --zap -v arbourd/tap/${{ matrix.cask }}

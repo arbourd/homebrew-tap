@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   list:
     runs-on: ubuntu-latest
@@ -24,26 +27,28 @@ jobs:
             const globber = await glob.create('Formula/*.rb')
             const paths = await globber.glob()
 
-            let formulae = paths.map((path, i) => {
-              return path.split('/').pop().replace(/\.rb$/, '')
+            const fs = require('fs')
+
+            // A bare `depends_on :macos` means macOS-only, so it is not tested on Linux.
+            // Versioned forms (`macos: :ventura`) still install on Linux.
+            const include = paths.flatMap((path) => {
+              const formula = path.split('/').pop().replace(/\.rb$/, '')
+              const macosOnly = /^\s*depends_on\s+:macos\s*$/m.test(fs.readFileSync(path, 'utf8'))
+              const oses = macosOnly ? ['macos-latest'] : ['macos-latest', 'ubuntu-latest']
+              return oses.map((os) => ({ formula, os }))
             })
 
-            console.log(formulae)
-            return formulae
+            console.log(include)
+            return include
 
   test:
+    name: test (${{ matrix.os }}, ${{ matrix.formula }})
     runs-on: ${{ matrix.os }}
     needs: [list]
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - macos-latest
-          - ubuntu-latest
-        formula: ${{ fromJson(needs.list.outputs.formulae) }}
-        exclude:
-          - os: ubuntu-latest
-            formula: trash
+        include: ${{ fromJson(needs.list.outputs.formulae) }}
 
     env:
       HOMEBREW_GITHUB_ACTIONS: 1
@@ -54,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: Homebrew/actions/setup-homebrew@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # main
+      - uses: Homebrew/actions/setup-homebrew@2026.10.12.1
         id: set-up-homebrew
 
       - name: Tap repository
@@ -77,9 +82,13 @@ jobs:
       - name: brew style ${{ matrix.formula }}
         run: brew style -v arbourd/tap/${{ matrix.formula }}
 
+      - name: brew audit ${{ matrix.formula }}
+        run: brew audit --strict --online --except=version arbourd/tap/${{ matrix.formula }}
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: brew install ${{ matrix.formula }}
         run: brew install -v arbourd/tap/${{ matrix.formula }}
 
       - name: brew test ${{ matrix.formula }}
         run: brew test -v arbourd/tap/${{ matrix.formula }}
-        if: ${{ matrix.formula != 'trash' }}
