@@ -1,0 +1,75 @@
+name: cask
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/cask.yml
+      - Casks/*.rb
+  push:
+    branches:
+      - main
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    outputs:
+      casks: ${{ steps.casks.outputs.result }}
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/github-script@v9
+        id: casks
+        with:
+          script: |
+            const globber = await glob.create('Casks/*.rb')
+            const paths = await globber.glob()
+
+            let casks = paths.map((path, i) => {
+              return path.split('/').pop().replace(/\.rb$/, '')
+            })
+
+            console.log(casks)
+            return casks
+
+  test:
+    runs-on: macos-latest
+    needs: [list]
+    strategy:
+      fail-fast: false
+      matrix:
+        cask: ${{ fromJson(needs.list.outputs.casks) }}
+
+    env:
+      HOMEBREW_GITHUB_ACTIONS: 1
+      HOMEBREW_NO_ANALYTICS: 1
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: Homebrew/actions/setup-homebrew@main
+
+      - name: Tap repository
+        run: |
+          mkdir -p "$(brew --repository)/Library/Taps/arbourd"
+          ln -s "$PWD" "$(brew --repository)/Library/Taps/arbourd/homebrew-tap"
+
+      - name: brew style ${{ matrix.cask }}
+        run: brew style --cask -v arbourd/tap/${{ matrix.cask }}
+
+      - name: brew audit ${{ matrix.cask }}
+        run: brew audit --cask --online arbourd/tap/${{ matrix.cask }}
+
+      - name: brew livecheck ${{ matrix.cask }}
+        run: brew livecheck --cask arbourd/tap/${{ matrix.cask }}
+
+      - name: brew install ${{ matrix.cask }}
+        run: brew install --cask -v arbourd/tap/${{ matrix.cask }}
+
+      - name: check app installed
+        if: ${{ matrix.cask == 'orca' }}
+        run: test -d /Applications/Orca.app
+
+      - name: brew uninstall ${{ matrix.cask }}
+        run: brew uninstall --cask --zap -v arbourd/tap/${{ matrix.cask }}
