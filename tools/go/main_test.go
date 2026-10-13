@@ -6,23 +6,6 @@ import (
 	"testing"
 )
 
-func TestProcessVersion(t *testing.T) {
-	tests := []struct {
-		input string
-		want  string
-	}{
-		{"go1.26", "1.26"},
-		{"go1.26.2", "1.26.2"},
-		{"1.26", "1.26"},
-	}
-	for _, tt := range tests {
-		got := processVersion(tt.input)
-		if got != tt.want {
-			t.Errorf("processVersion(%q) = %q, want %q", tt.input, got, tt.want)
-		}
-	}
-}
-
 func TestRenderFormula(t *testing.T) {
 	formula := Formula{
 		Version: "1.26.2",
@@ -96,8 +79,8 @@ func TestBuildFormula(t *testing.T) {
 			if f.SHA256 != w.sha256 {
 				t.Errorf("SHA256 = %q, want %q", f.SHA256, w.sha256)
 			}
-			if !strings.HasPrefix(f.URL, URL) {
-				t.Errorf("URL %q does not start with base URL %q", f.URL, URL)
+			if !strings.HasPrefix(f.URL, baseURL) {
+				t.Errorf("URL %q does not start with base URL %q", f.URL, baseURL)
 			}
 		})
 	}

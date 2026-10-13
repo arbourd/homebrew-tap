@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strings"
 	"text/template"
+	"time"
 )
 
 type ReleaseFile struct {
@@ -62,7 +62,11 @@ func (o OSArch) Condition() string {
 	panic(fmt.Sprintf("unknown OSArch %d", int(o)))
 }
 
-const URL = "https://go.dev/dl/"
+const (
+	baseURL        = "https://go.dev/dl/"
+	requestTimeout = 10 * time.Second
+	maxAttempts    = 3
+)
 
 var osArchMap = map[string]map[string]OSArch{
 	"darwin": {"arm64": DarwinArm64, "amd64": DarwinAmd64},
@@ -70,28 +74,12 @@ var osArchMap = map[string]map[string]OSArch{
 }
 
 func main() {
-	res, err := http.Get(URL + "?mode=json")
+	r, err := fetchReleases()
 	if err != nil {
 		log.Fatalf("cannot get Go release: %v", err)
 	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		log.Fatalf("cannot get Go release: unexpected status %s", res.Status)
-	}
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		log.Fatalf("cannot parse response body: %v", err)
-	}
-
-	r := []Release{}
-	err = json.Unmarshal(body, &r)
-	if err != nil {
-		log.Fatalf("cannot unmarshal JSON: %v", err)
-	}
 	if len(r) == 0 {
-		log.Fatalf("no Go releases found")
+		log.Fatal("no Go releases found")
 	}
 	formula := buildFormula(r[0])
 
@@ -100,6 +88,40 @@ func main() {
 		log.Fatalf("cannot render formula: %v", err)
 	}
 	fmt.Print(s)
+}
+
+// fetchReleases retrieves the release list, trying up to maxAttempts times
+// with a per-attempt timeout of requestTimeout.
+func fetchReleases() ([]Release, error) {
+	client := &http.Client{Timeout: requestTimeout}
+
+	var err error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		var r []Release
+		if r, err = fetchReleasesOnce(client); err == nil {
+			return r, nil
+		}
+		log.Printf("attempt %d/%d failed: %v", attempt, maxAttempts, err)
+	}
+	return nil, err
+}
+
+func fetchReleasesOnce(client *http.Client) ([]Release, error) {
+	res, err := client.Get(baseURL + "?mode=json")
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status: %s", res.Status)
+	}
+
+	var r []Release
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return nil, fmt.Errorf("cannot decode JSON: %w", err)
+	}
+	return r, nil
 }
 
 func renderFormula(formula Formula) (string, error) {
@@ -115,7 +137,7 @@ func renderFormula(formula Formula) (string, error) {
 }
 
 func buildFormula(latest Release) Formula {
-	formula := Formula{Version: processVersion(latest.Version)}
+	formula := Formula{Version: strings.TrimPrefix(latest.Version, "go")}
 	for _, f := range latest.Files {
 		if f.Kind != "archive" {
 			continue
@@ -127,7 +149,7 @@ func buildFormula(latest Release) Formula {
 		}
 
 		formula.Files = append(formula.Files, File{
-			URL:    URL + f.Filename,
+			URL:    baseURL + f.Filename,
 			SHA256: f.SHA256,
 			OSArch: osArch,
 		})
@@ -136,20 +158,14 @@ func buildFormula(latest Release) Formula {
 	return formula
 }
 
-// processVersion strips the "go" prefix from the version string.
-// Vestigial from the original go formula, kept for compatibility.
-func processVersion(v string) string {
-	return strings.TrimPrefix(v, "go")
-}
-
 const tmpl = `class Go < Formula
   desc "Open source programming language to build simple/reliable/efficient software"
   homepage "https://go.dev/"
   version "{{ .Version }}"
 {{ range $f := .Files }}
   if {{ $f.OSArch.Condition }}
-    url "{{ $f.URL }}"
-    sha256 "{{ $f.SHA256 }}"
+    url "{{ .URL }}"
+    sha256 "{{ .SHA256 }}"
   end
 {{ end }}
   def install
@@ -169,7 +185,7 @@ const tmpl = `class Go < Formula
     EOS
 
     # Run go fmt check for no errors then run the program.
-    # This is a a bare minimum of go working as it uses fmt, build, and run.
+    # This is a bare minimum of go working as it uses fmt, build, and run.
     system bin/"go", "fmt", "hello.go"
     assert_equal "Hello World\n", shell_output("#{bin}/go run hello.go")
 
