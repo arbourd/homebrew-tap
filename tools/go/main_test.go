@@ -1,38 +1,49 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
+var update = flag.Bool("update", false, "update golden files")
+
 func TestRenderFormula(t *testing.T) {
-	formula := Formula{
-		Version: "1.26.2",
-		Files: []File{
-			{URL: "https://go.dev/dl/go1.26.2.darwin-arm64.tar.gz", SHA256: "aaa", OSArch: DarwinArm64},
-			{URL: "https://go.dev/dl/go1.26.2.linux-amd64.tar.gz", SHA256: "bbb", OSArch: LinuxAmd64},
+	formula := buildFormula(Release{
+		Version: "go1.26.2",
+		Files: []ReleaseFile{
+			{Filename: "go1.26.2.darwin-arm64.tar.gz", OS: "darwin", Arch: "arm64", SHA256: "aaa", Kind: "archive"},
+			{Filename: "go1.26.2.darwin-amd64.tar.gz", OS: "darwin", Arch: "amd64", SHA256: "bbb", Kind: "archive"},
+			{Filename: "go1.26.2.linux-amd64.tar.gz", OS: "linux", Arch: "amd64", SHA256: "ccc", Kind: "archive"},
+			{Filename: "go1.26.2.linux-arm64.tar.gz", OS: "linux", Arch: "arm64", SHA256: "ddd", Kind: "archive"},
+			{Filename: "go1.26.2.linux-armv6l.tar.gz", OS: "linux", Arch: "armv6l", SHA256: "eee", Kind: "archive"},
 		},
-	}
+	})
 
 	got, err := renderFormula(formula)
 	if err != nil {
 		t.Fatalf("renderFormula() error: %v", err)
 	}
 
-	checks := []string{
-		`version "1.26.2"`,
-		`OS.mac? && Hardware::CPU.arm?`,
-		`url "https://go.dev/dl/go1.26.2.darwin-arm64.tar.gz"`,
-		`sha256 "aaa"`,
-		`OS.linux? && Hardware::CPU.intel?`,
-		`url "https://go.dev/dl/go1.26.2.linux-amd64.tar.gz"`,
-		`sha256 "bbb"`,
-	}
-	for _, want := range checks {
-		if !strings.Contains(got, want) {
-			t.Errorf("renderFormula() missing %q", want)
+	golden := filepath.Join("testdata", "go.rb.golden")
+	if *update {
+		if err := os.MkdirAll("testdata", 0o755); err != nil {
+			t.Fatal(err)
 		}
+		if err := os.WriteFile(golden, []byte(got), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	want, err := os.ReadFile(golden)
+	if err != nil {
+		t.Fatalf("cannot read golden file (run with -update to create): %v", err)
+	}
+	if got != string(want) {
+		t.Errorf("renderFormula() does not match %s (run with -update to regenerate)\n--- got ---\n%s", golden, got)
 	}
 }
 
