@@ -38,7 +38,7 @@ jobs:
           echo "::endgroup::"
 
           echo "${formula}" > Formula/go.rb
-          version=$(echo "$formula" | grep -oP 'version "\K[\d.]+')
+          version=$(echo "$formula" | grep -oP 'version "\K[^"]+')
 
           echo "version=${version}" >> $GITHUB_OUTPUT
 
