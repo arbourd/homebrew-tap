@@ -10,14 +10,9 @@ A personal collection of formula and mirrors
 * [go](https://go.dev/)
 * [trash](https://github.com/arbourd/trashOS)
 
-## Casks
-
-* [orca](https://github.com/stablyai/orca)
-
 ## Usage
 
 ```console
 $ brew tap arbourd/tap
 $ brew install <formula>
-$ brew install --cask <cask>
 ```

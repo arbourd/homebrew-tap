@@ -1,3 +1,4 @@
+# Disabled until the tap has a cask again (an empty matrix errors).
 name: cask
 
 on:
@@ -14,6 +15,7 @@ permissions:
 
 jobs:
   list:
+    if: false
     runs-on: ubuntu-latest
     outputs:
       casks: ${{ steps.casks.outputs.result }}
@@ -33,6 +35,7 @@ jobs:
             return casks
 
   test:
+    if: false
     runs-on: macos-latest
     needs: [list]
     strategy:
