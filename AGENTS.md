@@ -13,8 +13,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - `formula.yml` skips Linux for a formula only if it has a bare `depends_on :macos` line.
   A versioned form (`macos: :ventura`) is still tested on Linux.
 - Pin third-party actions to release tags, not SHAs. Dependabot bumps them.
-- `cask.yml` is disabled with `if: false` on both jobs while `Casks/` is empty. Remove those when
-  adding a cask.
+- `cask.yml` needs at least one cask in `Casks/` (an empty matrix errors). If the last cask is
+  removed, disable both jobs with `if: false`.
 
 ## Checks
 
