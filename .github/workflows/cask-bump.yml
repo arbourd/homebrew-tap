@@ -1,0 +1,35 @@
+name: cask-bump
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: macos-latest
+
+    env:
+      HOMEBREW_GITHUB_ACTIONS: 1
+      HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      HOMEBREW_NO_ANALYTICS: 1
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: Homebrew/actions/setup-homebrew@2026.10.12.1
+      - uses: Homebrew/actions/git-user-config@2026.10.12.1
+
+      - name: Tap repository
+        run: |
+          mkdir -p "$(brew --repository)/Library/Taps/arbourd"
+          ln -s "$PWD" "$(brew --repository)/Library/Taps/arbourd/homebrew-tap"
+
+      - name: brew bump
+        run: brew bump --cask --full-name --no-fork --open-pr arbourd/tap/orca
