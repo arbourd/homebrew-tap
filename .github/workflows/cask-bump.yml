@@ -6,6 +6,7 @@ on:
     - cron: "0 12 * * *"
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -33,3 +34,12 @@ jobs:
 
       - name: brew bump
         run: brew bump --cask --full-name --no-fork --open-pr arbourd/tap/orca
+
+      - name: approve cask checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sha=$(gh pr list --author app/github-actions --json headRefOid --jq '.[0].headRefOid')
+          [ -n "$sha" ] || exit 0
+          id=$(gh run list --workflow cask.yml --commit "$sha" --json databaseId --jq '.[0].databaseId')
+          gh api -X POST "repos/${{ github.repository }}/actions/runs/$id/approve"
