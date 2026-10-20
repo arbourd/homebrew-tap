@@ -24,8 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: Homebrew/actions/setup-homebrew@2026.10.12.1
-      - uses: Homebrew/actions/git-user-config@2026.10.12.1
+      - uses: Homebrew/actions/setup-homebrew@2026.10.19.1
+      - uses: Homebrew/actions/git-user-config@2026.10.19.1
 
       - name: Tap repository
         run: |
