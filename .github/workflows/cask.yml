@@ -60,7 +60,8 @@ jobs:
         run: brew style --cask -v arbourd/tap/${{ matrix.cask }}
 
       - name: brew audit ${{ matrix.cask }}
-        run: brew audit --cask --strict --online arbourd/tap/${{ matrix.cask }}
+        # livecheck_version fails whenever upstream ships before cask-bump.yml catches up
+        run: brew audit --cask --strict --online --except livecheck_version arbourd/tap/${{ matrix.cask }}
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
