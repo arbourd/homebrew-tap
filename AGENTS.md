@@ -13,9 +13,10 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - `formula.yml` skips Linux for a formula only if it has a bare `depends_on :macos` line.
   A versioned form (`macos: :ventura`) is still tested on Linux.
 - Pin third-party actions to release tags, not SHAs. Dependabot bumps them.
-- `Casks/orca.rb` is bumped daily by `cask-bump.yml`, which opens PRs with `GITHUB_TOKEN`, so
-  `cask.yml` doesn't run on them. Keep `--full-name` on `brew bump --cask`: homebrew/cask has an
-  unrelated `orca`, and a bare name makes `bump-cask-pr` target that one.
+- `bump.yml` runs `brew bump` daily on the casks and formulae it lists, opening PRs with
+  `GITHUB_TOKEN`, then approves their `cask.yml`/`formula.yml` runs. Only formulae with a
+  top-level `url`/`sha256` can be listed; GoReleaser's per-arch blocks fail. Keep
+  `--full-name` and the `arbourd/tap/` prefix: homebrew/cask has an unrelated `orca`.
 - `cask.yml` needs at least one cask in `Casks/` (an empty matrix errors). If the last cask is
   removed, disable both jobs with `if: false`.
 

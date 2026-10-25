@@ -1,4 +1,4 @@
-name: cask-bump
+name: bump
 
 on:
   workflow_dispatch:
@@ -32,14 +32,16 @@ jobs:
           mkdir -p "$(brew --repository)/Library/Taps/arbourd"
           ln -s "$PWD" "$(brew --repository)/Library/Taps/arbourd/homebrew-tap"
 
+      # Formulae must have a top-level url/sha256; GoReleaser's per-arch blocks can't be bumped.
       - name: brew bump
-        run: brew bump --cask --full-name --no-fork --open-pr arbourd/tap/orca
+        run: brew bump --full-name --no-fork --open-pr arbourd/tap/orca
 
-      - name: approve cask checks
+      - name: approve checks
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          sha=$(gh pr list --author app/github-actions --json headRefOid --jq '.[0].headRefOid')
-          [ -n "$sha" ] || exit 0
-          id=$(gh run list --workflow cask.yml --commit "$sha" --json databaseId --jq '.[0].databaseId')
-          gh api -X POST "repos/${{ github.repository }}/actions/runs/$id/approve"
+          for sha in $(gh pr list --author app/github-actions --json headRefOid --jq '.[].headRefOid'); do
+            for id in $(gh run list --commit "$sha" --status action_required --json databaseId --jq '.[].databaseId'); do
+              gh api -X POST "repos/${{ github.repository }}/actions/runs/$id/approve"
+            done
+          done
