@@ -6,6 +6,7 @@ on:
       - .github/workflows/go-update.yml
       - tools/go/**
   push:
+    branches: [main]
     paths:
       - .github/workflows/go-update.yml
       - tools/go/**
