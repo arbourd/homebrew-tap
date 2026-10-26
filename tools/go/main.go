@@ -1,10 +1,12 @@
 package main
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"text/template"
 	"time"
@@ -68,20 +70,26 @@ const (
 	maxAttempts    = 3
 )
 
+// retryDelay is the base wait between attempts; it grows linearly. A var so tests can zero it.
+var retryDelay = time.Second
+
 var osArchMap = map[string]map[string]OSArch{
 	"darwin": {"arm64": DarwinArm64, "amd64": DarwinAmd64},
 	"linux":  {"amd64": LinuxAmd64, "arm64": LinuxArm64, "armv6l": LinuxArm},
 }
 
 func main() {
-	r, err := fetchReleases()
+	r, err := fetchReleases(baseURL + "?mode=json")
 	if err != nil {
 		log.Fatalf("cannot get Go release: %v", err)
 	}
 	if len(r) == 0 {
 		log.Fatal("no Go releases found")
 	}
-	formula := buildFormula(r[0])
+	formula, err := buildFormula(r[0])
+	if err != nil {
+		log.Fatalf("cannot build formula: %v", err)
+	}
 
 	s, err := renderFormula(formula)
 	if err != nil {
@@ -90,24 +98,27 @@ func main() {
 	fmt.Print(s)
 }
 
-// fetchReleases retrieves the release list, trying up to maxAttempts times
-// with a per-attempt timeout of requestTimeout.
-func fetchReleases() ([]Release, error) {
+// fetchReleases retrieves the release list from url, trying up to maxAttempts
+// times with a per-attempt timeout of requestTimeout.
+func fetchReleases(url string) ([]Release, error) {
 	client := &http.Client{Timeout: requestTimeout}
 
 	var err error
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		var r []Release
-		if r, err = fetchReleasesOnce(client); err == nil {
+		if r, err = fetchReleasesOnce(client, url); err == nil {
 			return r, nil
 		}
 		log.Printf("attempt %d/%d failed: %v", attempt, maxAttempts, err)
+		if attempt < maxAttempts {
+			time.Sleep(time.Duration(attempt) * retryDelay)
+		}
 	}
 	return nil, err
 }
 
-func fetchReleasesOnce(client *http.Client) ([]Release, error) {
-	res, err := client.Get(baseURL + "?mode=json")
+func fetchReleasesOnce(client *http.Client, url string) ([]Release, error) {
+	res, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -136,26 +147,30 @@ func renderFormula(formula Formula) (string, error) {
 	return buf.String(), nil
 }
 
-func buildFormula(latest Release) Formula {
+func buildFormula(latest Release) (Formula, error) {
 	formula := Formula{Version: strings.TrimPrefix(latest.Version, "go")}
-	for _, f := range latest.Files {
-		if f.Kind != "archive" {
-			continue
+	var missing []string
+	for os, archs := range osArchMap {
+		for arch, osArch := range archs {
+			i := slices.IndexFunc(latest.Files, func(f ReleaseFile) bool {
+				return f.Kind == "archive" && f.OS == os && f.Arch == arch
+			})
+			if i < 0 {
+				missing = append(missing, os+"/"+arch)
+				continue
+			}
+			f := latest.Files[i]
+			formula.Files = append(formula.Files, File{URL: baseURL + f.Filename, SHA256: f.SHA256, OSArch: osArch})
 		}
-
-		osArch, ok := osArchMap[f.OS][f.Arch]
-		if !ok {
-			continue
-		}
-
-		formula.Files = append(formula.Files, File{
-			URL:    baseURL + f.Filename,
-			SHA256: f.SHA256,
-			OSArch: osArch,
-		})
+	}
+	if len(missing) > 0 {
+		slices.Sort(missing)
+		return Formula{}, fmt.Errorf("%s has no archive for: %s", latest.Version, strings.Join(missing, ", "))
 	}
 
-	return formula
+	// Map iteration order is random; keep the output stable.
+	slices.SortFunc(formula.Files, func(a, b File) int { return cmp.Compare(a.OSArch, b.OSArch) })
+	return formula, nil
 }
 
 const tmpl = `class Go < Formula
