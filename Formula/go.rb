@@ -3,14 +3,14 @@ class Go < Formula
   homepage "https://go.dev/"
   version "1.27.3"
 
-  if OS.mac? && Hardware::CPU.intel?
-    url "https://go.dev/dl/go1.27.3.darwin-amd64.tar.gz"
-    sha256 "b6f8e931e4ab497fcde6da8ae4499a58f9d258e55c8a80824a516eae5950a750"
-  end
-
   if OS.mac? && Hardware::CPU.arm?
     url "https://go.dev/dl/go1.27.3.darwin-arm64.tar.gz"
     sha256 "dd3908cf20959d798c1e06ebe5b72213f0505ce01373b40ce3110975a6cd99c2"
+  end
+
+  if OS.mac? && Hardware::CPU.intel?
+    url "https://go.dev/dl/go1.27.3.darwin-amd64.tar.gz"
+    sha256 "b6f8e931e4ab497fcde6da8ae4499a58f9d258e55c8a80824a516eae5950a750"
   end
 
   if OS.linux? && Hardware::CPU.intel?
@@ -45,7 +45,7 @@ class Go < Formula
     EOS
 
     # Run go fmt check for no errors then run the program.
-    # This is a a bare minimum of go working as it uses fmt, build, and run.
+    # This is a bare minimum of go working as it uses fmt, build, and run.
     system bin/"go", "fmt", "hello.go"
     assert_equal "Hello World\n", shell_output("#{bin}/go run hello.go")
 
