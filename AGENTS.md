@@ -14,7 +14,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   A versioned form (`macos: :ventura`) is still tested on Linux.
 - Pin third-party actions to release tags, not SHAs. Dependabot bumps them.
 - `Casks/orca.rb` is bumped daily by `cask-bump.yml`, which opens PRs with `GITHUB_TOKEN`, so
-  `cask.yml` doesn't run on them. Keep `--full-name` on `brew bump --cask`: homebrew/cask has an
+  `cask.yml` runs on them in an approval-required state (`action_required`). The workflow's last
+  step polls for those runs and approves them. Keep `--full-name` on `brew bump --cask`: homebrew/cask has an
   unrelated `orca`, and a bare name makes `bump-cask-pr` target that one.
 - `cask.yml` needs at least one cask in `Casks/` (an empty matrix errors). If the last cask is
   removed, disable both jobs with `if: false`.

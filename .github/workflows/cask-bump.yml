@@ -36,10 +36,38 @@ jobs:
         run: brew bump --cask --full-name --no-fork --open-pr arbourd/tap/orca
 
       - name: approve cask checks
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          sha=$(gh pr list --author app/github-actions --json headRefOid --jq '.[0].headRefOid')
-          [ -n "$sha" ] || exit 0
-          id=$(gh run list --workflow cask.yml --commit "$sha" --json databaseId --jq '.[0].databaseId')
-          gh api -X POST "repos/${{ github.repository }}/actions/runs/$id/approve"
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+            const awaiting = async () => {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                ...context.repo,
+                workflow_id: 'cask.yml',
+                event: 'pull_request',
+                status: 'action_required',
+              })
+              // Only bump PRs opened by the bot from this repo, never forks or hand-made branches.
+              return data.workflow_runs.filter(
+                (run) =>
+                  run.actor.login === 'github-actions[bot]' &&
+                  run.head_repository?.full_name === `${context.repo.owner}/${context.repo.repo}` &&
+                  run.head_branch.startsWith('bump-'),
+              )
+            }
+
+            // The run appears a few seconds after the PR opens.
+            let runs = await awaiting()
+            for (let i = 0; i < 6 && !runs.length; i++) {
+              await sleep(5000)
+              runs = await awaiting()
+            }
+
+            if (!runs.length) core.warning('no cask.yml run awaiting approval')
+            for (const run of runs) {
+              try {
+                await github.rest.actions.approveWorkflowRun({ ...context.repo, run_id: run.id })
+              } catch (error) {
+                core.warning(`could not approve run ${run.id}: ${error.message}`)
+              }
+            }
