@@ -59,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: Homebrew/actions/setup-homebrew@2026.10.19.1
+      - uses: Homebrew/actions/setup-homebrew@2026.10.26.1
         id: set-up-homebrew
 
       - name: Tap repository
