@@ -3,7 +3,7 @@ name: cask-bump
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 12 * * *"
+    - cron: "17 6 * * *"
 
 permissions:
   actions: write
