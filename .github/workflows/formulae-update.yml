@@ -1,0 +1,119 @@
+name: formulae
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/formulae-update.yml
+      - tools/formulae/**
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/formulae-update.yml
+      - tools/formulae/**
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * *"
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    outputs:
+      formulae: ${{ steps.formulae.outputs.formulae }}
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          cache: false
+          go-version-file: go.mod
+      - id: formulae
+        run: echo "formulae=$(go run ./tools/formulae --list)" >> $GITHUB_OUTPUT
+
+  update:
+    runs-on: ubuntu-latest
+    needs: [list]
+    strategy:
+      fail-fast: false
+      matrix:
+        formula: ${{ fromJson(needs.list.outputs.formulae) }}
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          cache: false
+          go-version-file: go.mod
+
+      - name: Run formula update
+        id: formula
+        run: |
+          go run ./tools/formulae ${{ matrix.formula }} > Formula/${{ matrix.formula }}.rb
+
+          echo "::group::formula"
+          cat Formula/${{ matrix.formula }}.rb
+          echo "::endgroup::"
+
+          version=$(grep -oP 'version "\K[^"]+' Formula/${{ matrix.formula }}.rb)
+          echo "version=${version}" >> $GITHUB_OUTPUT
+
+          homepage=$(grep -oP 'homepage "\K[^"]+' Formula/${{ matrix.formula }}.rb)
+          echo "homepage=${homepage}" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pull Request
+        id: pr
+        if: github.event_name != 'pull_request'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: ${{ matrix.formula }}-${{ steps.formula.outputs.version }}
+          commit-message: ${{ matrix.formula }} ${{ steps.formula.outputs.version }}
+          title: ${{ matrix.formula }} ${{ steps.formula.outputs.version }}
+          body: |
+            ${{ steps.formula.outputs.homepage }}/releases/tag/v${{ steps.formula.outputs.version }}
+          reviewers: arbourd
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: approve formula checks
+        if: steps.pr.outputs.pull-request-number != ''
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+            const branch = /^${{ matrix.formula }}-\d/
+            const awaiting = async () => {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                ...context.repo,
+                workflow_id: 'formula.yml',
+                event: 'pull_request',
+                status: 'action_required',
+              })
+              // Only this formula's PRs opened by the bot from this repo, never forks or hand-made branches.
+              return data.workflow_runs.filter(
+                (run) =>
+                  run.actor.login === 'github-actions[bot]' &&
+                  run.head_repository?.full_name === `${context.repo.owner}/${context.repo.repo}` &&
+                  branch.test(run.head_branch),
+              )
+            }
+
+            // The run appears a few seconds after the PR opens.
+            let runs = await awaiting()
+            for (let i = 0; i < 6 && !runs.length; i++) {
+              await sleep(5000)
+              runs = await awaiting()
+            }
+
+            if (!runs.length) core.warning('no formula.yml run awaiting approval')
+            for (const run of runs) {
+              try {
+                await github.rest.actions.approveWorkflowRun({ ...context.repo, run_id: run.id })
+              } catch (error) {
+                core.warning(`could not approve run ${run.id}: ${error.message}`)
+              }
+            }

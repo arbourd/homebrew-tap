@@ -1,0 +1,63 @@
+# One entry per formula, keyed by formula name. The formulae-update.yml matrix is built from these keys.
+git-get:
+  repo: arbourd/git-get
+  desc: Go gets your code
+  conflicts: [git-extras]
+  install:
+    - bin.install "git-get"
+    - man1.install "man/git-get.1"
+    - bash_completion.install "completions/git-get.bash" => "git-get"
+    - zsh_completion.install "completions/git-get.zsh" => "_git_get"
+    - fish_completion.install "completions/git-get.fish"
+  test: |-
+    repo = "github.com/arbourd/git-get"
+    assert_match "#{testpath}/src/#{repo}", shell_output("#{bin}/git-get #{repo}")
+
+    cd "#{testpath}/src/#{repo}" do
+      assert_match "https://#{repo}", shell_output("git remote -v")
+    end
+
+git-open:
+  repo: arbourd/git-open
+  desc: Opens your Git repository in your browser
+  conflicts: [git-open]
+  install:
+    - bin.install "git-open"
+  test: |-
+    system "git", "clone", "https://github.com/arbourd/git-open.git"
+
+    cd "git-open" do
+      assert_match "Opening https://github.com/arbourd/git-open",
+                   shell_output("#{bin}/git-open")
+      assert_match "Opening https://github.com/arbourd/git-open/tree/main/main.go",
+                   shell_output("#{bin}/git-open main.go")
+      assert_match "Opening https://github.com/arbourd/git-open/commit/71e081deeb92764e1bae203419ac72de1d935d2f",
+                   shell_output("#{bin}/git-open 71e081deeb92764e1bae203419ac72de1d935d2f")
+    end
+
+git-sync:
+  repo: arbourd/git-sync
+  desc: Updates your branches
+  conflicts: [git-extras, git-sync]
+  install:
+    - bin.install "git-sync"
+  test: |-
+    system "git", "clone", "https://github.com/arbourd/git-sync.git"
+
+    cd "git-sync" do
+      system "git", "reset", "--hard", "HEAD~1"
+      sha = shell_output("git rev-parse HEAD")
+
+      assert_match sha[0..6], shell_output("#{bin}/git-sync")
+      refute_equal sha, shell_output("git rev-parse HEAD")
+    end
+
+trash:
+  repo: arbourd/trash
+  desc: Safely move items to macOS trash asynchronously
+  mac_only: true
+  conflicts: [macos-trash, trash, trash-cli]
+  install:
+    - bin.install "trash"
+  test: |-
+    assert_match "trash, version #{version}", shell_output("#{bin}/trash --version")
