@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=formulae.schema.json
 # One entry per formula, keyed by formula name. The formulae-update.yml matrix is built from these keys.
 git-get:
   repo: arbourd/git-get

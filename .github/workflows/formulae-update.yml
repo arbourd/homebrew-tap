@@ -20,6 +20,17 @@ permissions:
   pull-requests: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          cache: false
+          go-version-file: go.mod
+      - run: go test ./tools/formulae -race
+
   list:
     runs-on: ubuntu-latest
     outputs:
