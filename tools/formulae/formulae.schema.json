@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "formulae.yaml",
+  "description": "Registry of generated Homebrew formulae, keyed by formula name.",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["repo", "desc", "install", "test"],
+    "properties": {
+      "repo": {
+        "type": "string",
+        "pattern": "^[^/]+/[^/]+$",
+        "description": "GitHub repository (owner/name) whose latest release provides the version and sha256."
+      },
+      "desc": {
+        "type": "string",
+        "description": "Formula description.",
+        "minLength": 1
+      },
+      "mac_only": {
+        "type": "boolean",
+        "description": "Emit `depends_on :macos` and skip Linux."
+      },
+      "conflicts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Formulae to emit as `conflicts_with`."
+      },
+      "urls": {
+        "type": "object",
+        "description": "Per-platform asset URLs for releases that aren't GoReleaser-style. `#{version}` is interpolated by Homebrew. Every platform not skipped by `mac_only` is required.",
+        "propertyNames": {
+          "enum": ["darwin-arm64", "darwin-amd64", "linux-amd64", "linux-arm64"]
+        },
+        "additionalProperties": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": ["darwin-arm64", "darwin-amd64"]
+      },
+      "install": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minItems": 1,
+        "description": "Ruby lines for the `install` block."
+      },
+      "test": {
+        "type": "string",
+        "description": "Ruby body of the `test do` block.",
+        "minLength": 1
+      }
+    },
+    "if": {
+      "properties": {
+        "mac_only": {
+          "const": true
+        }
+      },
+      "required": ["mac_only"]
+    },
+    "else": {
+      "properties": {
+        "urls": {
+          "required": ["linux-amd64", "linux-arm64"]
+        }
+      }
+    }
+  },
+  "propertyNames": {
+    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+  }
+}

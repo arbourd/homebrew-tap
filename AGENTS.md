@@ -12,6 +12,7 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   `.github/workflows/formulae-update.yml`, which opens a "<name> X.Y.Z" PR per formula. It reads
   version and sha256 from the latest GitHub release (asset `digest`). Change the registry (`tools/formulae/formulae.yaml`, including each `repo`) or the template
   in `tools/formulae/main.go`, not the formulae. The workflow matrix comes from `go run ./tools/formulae --list`.
+  `formulae.yaml` is described by `tools/formulae/formulae.schema.json`; update it with any `Spec` field change.
   To add a project: add a `formulae.yaml` entry. Releases must be GoReleaser-style
   `<name>-v<ver>-<os>-<arch>.tar.gz` assets with a GitHub `digest`, unless the entry has a `urls` map
   (platform suffix like `darwin-arm64` -> full URL with `#{version}`, every non-skipped platform required).
