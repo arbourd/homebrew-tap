@@ -94,3 +94,52 @@ opengrep:
     (testpath/"test.py").write "eval(input())\n"
     assert_match "1 Code Finding",
                  shell_output("#{bin}/opengrep scan --config rule.yml test.py")
+
+go:
+  source: go
+  homepage: https://go.dev/
+  release_notes: https://go.dev/doc/devel/release#go#{version}
+  desc: Open source programming language to build simple/reliable/efficient software
+  install:
+    - libexec.install Dir["*"]
+    - bin.install_symlink Dir[libexec/"bin/go*"]
+  test: |-
+    (testpath/"hello.go").write <<~EOS
+      package main
+
+      import "fmt"
+
+      func main() {
+          fmt.Println("Hello World")
+      }
+    EOS
+
+    # Run go fmt check for no errors then run the program.
+    # This is a bare minimum of go working as it uses fmt, build, and run.
+    system bin/"go", "fmt", "hello.go"
+    assert_equal "Hello World\n", shell_output("#{bin}/go run hello.go")
+
+    with_env(GOOS: "freebsd", GOARCH: "amd64") do
+      system bin/"go", "build", "hello.go"
+    end
+
+    (testpath/"hello_cgo.go").write <<~EOS
+      package main
+
+      /*
+      #include <stdlib.h>
+      #include <stdio.h>
+      void hello() { printf("%s\\n", "Hello from cgo!"); fflush(stdout); }
+      */
+      import "C"
+
+      func main() {
+          C.hello()
+      }
+    EOS
+
+    # Try running a sample using cgo without CC or CXX set to ensure that the
+    # toolchain's default choice of compilers work
+    with_env(CC: nil, CXX: nil) do
+      assert_equal "Hello from cgo!\n", shell_output("#{bin}/go run hello_cgo.go")
+    end

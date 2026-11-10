@@ -1,27 +1,22 @@
 package main
 
 import (
-	"flag"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
 )
 
-var update = flag.Bool("update", false, "update golden files")
-
 // sha returns a valid sha256 made of the hex digit c.
 func sha(c string) string { return strings.Repeat(c, 64) }
 
-// supportedRelease returns a release with one archive for each supported platform.
-func supportedRelease() Release {
-	return Release{
+// supportedGoRelease returns a release with one archive for each supported platform.
+func supportedGoRelease() goRelease {
+	return goRelease{
 		Version: "go1.26.2",
-		Files: []ReleaseFile{
+		Files: []goFile{
 			{Filename: "go1.26.2.darwin-arm64.tar.gz", OS: "darwin", Arch: "arm64", SHA256: sha("a"), Kind: "archive"},
 			{Filename: "go1.26.2.darwin-amd64.tar.gz", OS: "darwin", Arch: "amd64", SHA256: sha("b"), Kind: "archive"},
 			{Filename: "go1.26.2.linux-amd64.tar.gz", OS: "linux", Arch: "amd64", SHA256: sha("c"), Kind: "archive"},
@@ -31,47 +26,17 @@ func supportedRelease() Release {
 	}
 }
 
-func TestRenderFormula(t *testing.T) {
-	formula, err := buildFormula(supportedRelease())
-	if err != nil {
-		t.Fatalf("buildFormula() error: %v", err)
-	}
-
-	got, err := renderFormula(formula)
-	if err != nil {
-		t.Fatalf("renderFormula() error: %v", err)
-	}
-
-	golden := filepath.Join("testdata", "go.rb.golden")
-	if *update {
-		if err := os.MkdirAll("testdata", 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(golden, []byte(got), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	want, err := os.ReadFile(golden)
-	if err != nil {
-		t.Fatalf("cannot read golden file (run with -update to create): %v", err)
-	}
-	if got != string(want) {
-		t.Errorf("renderFormula() does not match %s (run with -update to regenerate)\n--- got ---\n%s", golden, got)
-	}
-}
-
-func TestBuildFormula(t *testing.T) {
+func TestBuildGoFormula(t *testing.T) {
 	// Unsupported entries are interleaved to check they are filtered out.
-	release := supportedRelease()
+	release := supportedGoRelease()
 	release.Files = append(release.Files,
-		ReleaseFile{Filename: "go1.26.2.src.tar.gz", SHA256: sha("f"), Kind: "source"},
-		ReleaseFile{Filename: "go1.26.2.windows-amd64.zip", OS: "windows", Arch: "amd64", SHA256: sha("0"), Kind: "archive"},
+		goFile{Filename: "go1.26.2.src.tar.gz", SHA256: sha("f"), Kind: "source"},
+		goFile{Filename: "go1.26.2.windows-amd64.zip", OS: "windows", Arch: "amd64", SHA256: sha("0"), Kind: "archive"},
 	)
 
-	got, err := buildFormula(release)
+	got, err := buildGoFormula("go", specs["go"], release)
 	if err != nil {
-		t.Fatalf("buildFormula() error: %v", err)
+		t.Fatalf("buildGoFormula() error: %v", err)
 	}
 
 	if got.Version != "1.26.2" {
@@ -79,54 +44,54 @@ func TestBuildFormula(t *testing.T) {
 	}
 
 	want := []File{
-		{URL: baseURL + "go1.26.2.darwin-arm64.tar.gz", SHA256: sha("a"), OSArch: DarwinArm64},
-		{URL: baseURL + "go1.26.2.darwin-amd64.tar.gz", SHA256: sha("b"), OSArch: DarwinAmd64},
-		{URL: baseURL + "go1.26.2.linux-amd64.tar.gz", SHA256: sha("c"), OSArch: LinuxAmd64},
-		{URL: baseURL + "go1.26.2.linux-arm64.tar.gz", SHA256: sha("d"), OSArch: LinuxArm64},
-		{URL: baseURL + "go1.26.2.linux-armv6l.tar.gz", SHA256: sha("e"), OSArch: LinuxArm},
+		{URL: goDL + "go1.26.2.darwin-arm64.tar.gz", SHA256: sha("a"), Platform: platforms[0]},
+		{URL: goDL + "go1.26.2.darwin-amd64.tar.gz", SHA256: sha("b"), Platform: platforms[1]},
+		{URL: goDL + "go1.26.2.linux-amd64.tar.gz", SHA256: sha("c"), Platform: platforms[2]},
+		{URL: goDL + "go1.26.2.linux-arm64.tar.gz", SHA256: sha("d"), Platform: platforms[3]},
+		{URL: goDL + "go1.26.2.linux-armv6l.tar.gz", SHA256: sha("e"), Platform: linuxArm},
 	}
 	if !slices.Equal(got.Files, want) {
 		t.Errorf("Files = %+v, want %+v", got.Files, want)
 	}
 }
 
-func TestBuildFormulaInvalid(t *testing.T) {
+func TestBuildGoFormulaInvalid(t *testing.T) {
 	tests := []struct {
 		name   string
-		mutate func(*Release)
+		mutate func(*goRelease)
 	}{
-		{"version", func(r *Release) { r.Version = "go1.26.2\nexit" }},
-		{"filename", func(r *Release) { r.Files[0].Filename = "go1.26.2.darwin-arm64.tar.gz\" evil" }},
-		{"sha256 too short", func(r *Release) { r.Files[0].SHA256 = "aaa" }},
-		{"sha256 not hex", func(r *Release) { r.Files[0].SHA256 = sha("z") }},
+		{"version", func(r *goRelease) { r.Version = "go1.26.2\nexit" }},
+		{"filename", func(r *goRelease) { r.Files[0].Filename = "go1.26.2.darwin-arm64.tar.gz\" evil" }},
+		{"sha256 too short", func(r *goRelease) { r.Files[0].SHA256 = "aaa" }},
+		{"sha256 not hex", func(r *goRelease) { r.Files[0].SHA256 = sha("z") }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			release := supportedRelease()
+			release := supportedGoRelease()
 			tt.mutate(&release)
-			if _, err := buildFormula(release); err == nil {
-				t.Error("buildFormula() error = nil, want validation error")
+			if _, err := buildGoFormula("go", specs["go"], release); err == nil {
+				t.Error("buildGoFormula() error = nil, want validation error")
 			}
 		})
 	}
 }
 
-func TestBuildFormulaMissingPlatform(t *testing.T) {
-	release := supportedRelease()
+func TestBuildGoFormulaMissingPlatform(t *testing.T) {
+	release := supportedGoRelease()
 	release.Files = release.Files[:len(release.Files)-1]
 
-	if _, err := buildFormula(release); err == nil {
-		t.Error("buildFormula() error = nil, want error for missing platform")
+	if _, err := buildGoFormula("go", specs["go"], release); err == nil {
+		t.Error("buildGoFormula() error = nil, want error for missing platform")
 	}
 }
 
-func TestBuildFormulaDuplicatePlatform(t *testing.T) {
+func TestBuildGoFormulaDuplicatePlatform(t *testing.T) {
 	// Five archives, but linux-armv6l is replaced by a second linux-amd64.
-	release := supportedRelease()
+	release := supportedGoRelease()
 	release.Files[4] = release.Files[2]
 
-	if _, err := buildFormula(release); err == nil {
-		t.Error("buildFormula() error = nil, want error for duplicate and missing platform")
+	if _, err := buildGoFormula("go", specs["go"], release); err == nil {
+		t.Error("buildGoFormula() error = nil, want error for duplicate and missing platform")
 	}
 }
 
@@ -160,15 +125,15 @@ func TestFetchReleases(t *testing.T) {
 			}))
 			defer srv.Close()
 
-			got, err := fetchReleases(srv.URL)
+			got, err := fetchGoReleases(srv.URL)
 			if (err != nil) != tt.wantErr {
-				t.Fatalf("fetchReleases() error = %v, wantErr %v", err, tt.wantErr)
+				t.Fatalf("fetchGoReleases() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if got := int(requests.Load()); got != tt.wantRequests {
 				t.Errorf("requests = %d, want %d", got, tt.wantRequests)
 			}
 			if !tt.wantErr && (len(got) != 1 || got[0].Version != "go1.26.2") {
-				t.Errorf("fetchReleases() = %+v, want one release go1.26.2", got)
+				t.Errorf("fetchGoReleases() = %+v, want one release go1.26.2", got)
 			}
 		})
 	}

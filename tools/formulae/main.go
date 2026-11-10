@@ -1,15 +1,22 @@
-// Command formulae prints a formula for one project, built from the latest GitHub release.
+// Command formulae prints Homebrew formulae for the projects in formulae.yaml, built from each
+// project's latest release (GitHub, or go.dev for `source: go`).
+//
+// Usage:
+//
+//	formulae <name>                    print the formula for <name>
+//	formulae --list                    print every name as a JSON array
+//	formulae --notes <name> <version>  print the release notes URL for <version>
 package main
 
 import (
 	"bytes"
+	"cmp"
 	_ "embed"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"path"
 	"slices"
 	"strings"
 	"text/template"
@@ -18,28 +25,22 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Spec describes a formula. Releases follow GoReleaser's `<name>-v<ver>-<os>-<arch>.tar.gz` layout
-// unless URLs overrides them.
+// Spec describes a formula. Releases come from GitHub (the default source) and follow GoReleaser's
+// `<name>-v<ver>-<os>-<arch>.tar.gz` layout unless URLs overrides them. Source "go" reads go.dev instead.
 type Spec struct {
-	Repo      string   `yaml:"repo"`
-	Desc      string   `yaml:"desc"`
-	MacOnly   bool     `yaml:"mac_only"`
-	Conflicts []string `yaml:"conflicts"`
-	Install   []string `yaml:"install"`
-	Test      string   `yaml:"test"`
+	Source   string `yaml:"source"`
+	Repo     string `yaml:"repo"`
+	Homepage string `yaml:"homepage"`
+	// ReleaseNotes is the PR body link; `#{version}` is replaced by the version.
+	ReleaseNotes string   `yaml:"release_notes"`
+	Desc         string   `yaml:"desc"`
+	MacOnly      bool     `yaml:"mac_only"`
+	Conflicts    []string `yaml:"conflicts"`
+	Install      []string `yaml:"install"`
+	Test         string   `yaml:"test"`
 	// URLs maps a platform suffix (e.g. darwin-arm64) to its download URL, written as it appears
 	// in the formula (with `#{version}`). Every non-skipped platform must be listed.
 	URLs map[string]string `yaml:"urls"`
-}
-
-type Asset struct {
-	Name   string `json:"name"`
-	Digest string `json:"digest"`
-}
-
-type Release struct {
-	Tag    string  `json:"tag_name"`
-	Assets []Asset `json:"assets"`
 }
 
 // Platform is one release target. Suffix is the asset name's `<os>-<arch>` part.
@@ -95,13 +96,27 @@ func loadSpecs() map[string]Spec {
 		if err := spec.validate(); err != nil {
 			panic(fmt.Sprintf("formulae.yaml: %s: %v", name, err))
 		}
+		if spec.Source == "" {
+			repoURL := "https://github.com/" + spec.Repo
+			spec.Homepage = cmp.Or(spec.Homepage, repoURL)
+			spec.ReleaseNotes = cmp.Or(spec.ReleaseNotes, repoURL+"/releases/tag/v#{version}")
+			m[name] = spec
+		}
 	}
 	return m
 }
 
 func (s Spec) validate() error {
 	switch {
-	case strings.Count(s.Repo, "/") != 1 || strings.HasPrefix(s.Repo, "/") || strings.HasSuffix(s.Repo, "/"):
+	case s.Source != "" && s.Source != "go":
+		return fmt.Errorf("unknown source %q", s.Source)
+	case s.Source == "go" && (s.Repo != "" || s.URLs != nil || s.MacOnly || s.Conflicts != nil):
+		return fmt.Errorf("repo, urls, mac_only and conflicts do not apply to source go")
+	case s.Source == "go" && (s.Homepage == "" || s.ReleaseNotes == ""):
+		return fmt.Errorf("homepage and release_notes are required for source go")
+	case s.ReleaseNotes != "" && !strings.Contains(s.ReleaseNotes, "#{version}"):
+		return fmt.Errorf("release_notes must contain #{version}")
+	case s.Source == "" && (strings.Count(s.Repo, "/") != 1 || strings.HasPrefix(s.Repo, "/") || strings.HasSuffix(s.Repo, "/")):
 		return fmt.Errorf("repo %q must be owner/name", s.Repo)
 	case s.Desc == "":
 		return fmt.Errorf("desc is required")
@@ -119,14 +134,21 @@ func (s Spec) validate() error {
 }
 
 func main() {
-	if len(os.Args) == 2 && os.Args[1] == "--list" {
+	switch {
+	case len(os.Args) == 2 && os.Args[1] == "--list":
 		if err := json.NewEncoder(os.Stdout).Encode(names()); err != nil {
 			log.Fatal(err)
 		}
 		return
-	}
-	if len(os.Args) != 2 {
-		log.Fatalf("usage: formulae <name> | --list; names: %s", strings.Join(names(), ", "))
+	case len(os.Args) == 4 && os.Args[1] == "--notes":
+		spec, ok := specs[os.Args[2]]
+		if !ok {
+			log.Fatalf("unknown formula %q; names: %s", os.Args[2], strings.Join(names(), ", "))
+		}
+		fmt.Println(strings.ReplaceAll(spec.ReleaseNotes, "#{version}", os.Args[3]))
+		return
+	case len(os.Args) != 2:
+		log.Fatalf("usage: formulae <name> | --list | --notes <name> <version>; names: %s", strings.Join(names(), ", "))
 	}
 	name := os.Args[1]
 	spec, ok := specs[name]
@@ -134,19 +156,34 @@ func main() {
 		log.Fatalf("unknown formula %q; names: %s", name, strings.Join(names(), ", "))
 	}
 
-	r, err := fetchRelease("https://api.github.com/repos/" + spec.Repo + "/releases/latest")
+	formula, err := latest(name, spec)
 	if err != nil {
-		log.Fatalf("cannot get %s release: %v", spec.Repo, err)
-	}
-	formula, err := buildFormula(name, spec, r)
-	if err != nil {
-		log.Fatalf("cannot build formula: %v", err)
+		log.Fatalf("cannot build %s: %v", name, err)
 	}
 	s, err := renderFormula(formula)
 	if err != nil {
 		log.Fatalf("cannot render formula: %v", err)
 	}
 	fmt.Print(s)
+}
+
+// latest builds the formula for the newest release from the spec's source.
+func latest(name string, spec Spec) (Formula, error) {
+	if spec.Source == "go" {
+		r, err := fetchGoReleases(goDL + "?mode=json")
+		if err != nil {
+			return Formula{}, err
+		}
+		if len(r) == 0 {
+			return Formula{}, fmt.Errorf("no Go releases found")
+		}
+		return buildGoFormula(name, spec, r[0])
+	}
+	r, err := fetchRelease("https://api.github.com/repos/" + spec.Repo + "/releases/latest")
+	if err != nil {
+		return Formula{}, err
+	}
+	return buildFormula(name, spec, r)
 }
 
 func names() []string {
@@ -158,84 +195,48 @@ func names() []string {
 	return n
 }
 
-// fetchRelease retrieves the latest release from url, trying up to maxAttempts times.
-func fetchRelease(url string) (Release, error) {
+// getJSON decodes the JSON at url, trying up to maxAttempts times.
+func getJSON[T any](url string, setHeaders func(*http.Request)) (T, error) {
 	client := &http.Client{Timeout: requestTimeout}
 
 	var err error
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		var r Release
-		if r, err = fetchReleaseOnce(client, url); err == nil {
-			return r, nil
+		var v T
+		if v, err = getJSONOnce[T](client, url, setHeaders); err == nil {
+			return v, nil
 		}
-		log.Printf("attempt %d/%d failed: %v", attempt, maxAttempts, err)
+		log.Printf("GET %s: attempt %d/%d failed: %v", url, attempt, maxAttempts, err)
 		if attempt < maxAttempts {
 			time.Sleep(time.Duration(attempt) * retryDelay)
 		}
 	}
-	return Release{}, err
+	var zero T
+	return zero, fmt.Errorf("GET %s: %w", url, err)
 }
 
-func fetchReleaseOnce(client *http.Client, url string) (Release, error) {
+func getJSONOnce[T any](client *http.Client, url string, setHeaders func(*http.Request)) (T, error) {
+	var v T
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return Release{}, err
+		return v, err
 	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
+	if setHeaders != nil {
+		setHeaders(req)
 	}
 
 	res, err := client.Do(req)
 	if err != nil {
-		return Release{}, err
+		return v, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return Release{}, fmt.Errorf("unexpected status: %s", res.Status)
+		return v, fmt.Errorf("unexpected status: %s", res.Status)
 	}
-
-	var r Release
-	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		return Release{}, fmt.Errorf("cannot decode JSON: %w", err)
+	if err := json.NewDecoder(res.Body).Decode(&v); err != nil {
+		return v, fmt.Errorf("cannot decode JSON: %w", err)
 	}
-	return r, nil
-}
-
-func buildFormula(name string, spec Spec, r Release) (Formula, error) {
-	version := strings.TrimPrefix(r.Tag, "v")
-	formula := Formula{Spec: spec, Name: name, Class: class(name), Version: version}
-
-	var problems []string
-	for _, p := range platforms {
-		if spec.MacOnly && !p.Mac {
-			continue
-		}
-		url := fmt.Sprintf("https://github.com/%s/releases/download/v#{version}/%s-v#{version}-%s.tar.gz", spec.Repo, name, p.Suffix)
-		if spec.URLs != nil {
-			url = spec.URLs[p.Suffix]
-		}
-		asset := path.Base(strings.ReplaceAll(url, "#{version}", version))
-		i := slices.IndexFunc(r.Assets, func(a Asset) bool { return a.Name == asset })
-		if i < 0 {
-			problems = append(problems, asset+" is missing")
-			continue
-		}
-		a := r.Assets[i]
-		// digest is only set on assets uploaded since mid-2025.
-		sha, ok := strings.CutPrefix(a.Digest, "sha256:")
-		if !ok {
-			problems = append(problems, asset+" has no sha256 digest")
-			continue
-		}
-		formula.Files = append(formula.Files, File{SHA256: sha, Platform: p, URL: url})
-	}
-	if len(problems) > 0 {
-		return Formula{}, fmt.Errorf("%s %s: %s", name, r.Tag, strings.Join(problems, ", "))
-	}
-
-	return formula, nil
+	return v, nil
 }
 
 // class turns a formula name into its Ruby class name: git-get -> GitGet.
@@ -274,7 +275,7 @@ func renderFormula(formula Formula) (string, error) {
 const tmpl = `# This file was generated by tools/formulae. DO NOT EDIT.
 class {{ .Class }} < Formula
   desc "{{ .Desc }}"
-  homepage "https://github.com/{{ .Repo }}"
+  homepage "{{ .Homepage }}"
   version "{{ .Version }}"
 {{- if .MacOnly }}
   depends_on :macos

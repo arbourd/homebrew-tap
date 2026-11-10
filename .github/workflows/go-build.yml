@@ -5,12 +5,12 @@ on:
     paths:
       - .github/workflows/go-build.yml
       - go.*
-      - tools/go/**
+      - tools/formulae/**
   push:
     paths:
       - .github/workflows/go-build.yml
       - go.*
-      - tools/go/**
+      - tools/formulae/**
     branches:
       - main
 
@@ -32,4 +32,4 @@ jobs:
 
       - run: go vet ./...
       - run: go test ./... -v -race
-      - run: go run ./tools/go
+      - run: go run ./tools/formulae go
