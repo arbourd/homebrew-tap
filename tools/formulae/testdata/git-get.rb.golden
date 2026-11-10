@@ -24,6 +24,8 @@ class GitGet < Formula
     sha256 "0000000000000000000000000000000000000000000000000000000000000004"
   end
 
+  conflicts_with "git-extras"
+
   def install
     bin.install "git-get"
     man1.install "man/git-get.1"
@@ -31,8 +33,6 @@ class GitGet < Formula
     zsh_completion.install "completions/git-get.zsh" => "_git_get"
     fish_completion.install "completions/git-get.fish"
   end
-
-  conflicts_with "git-extras"
 
   test do
     repo = "github.com/arbourd/git-get"

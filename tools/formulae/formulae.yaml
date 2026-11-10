@@ -28,7 +28,7 @@ git-open:
 
     cd "git-open" do
       assert_match "Opening https://github.com/arbourd/git-open",
-                   shell_output("#{bin}/git-open")
+                   shell_output(bin/"git-open")
       assert_match "Opening https://github.com/arbourd/git-open/tree/main/main.go",
                    shell_output("#{bin}/git-open main.go")
       assert_match "Opening https://github.com/arbourd/git-open/commit/71e081deeb92764e1bae203419ac72de1d935d2f",
@@ -48,7 +48,7 @@ git-sync:
       system "git", "reset", "--hard", "HEAD~1"
       sha = shell_output("git rev-parse HEAD")
 
-      assert_match sha[0..6], shell_output("#{bin}/git-sync")
+      assert_match sha[0..6], shell_output(bin/"git-sync")
       refute_equal sha, shell_output("git rev-parse HEAD")
     end
 

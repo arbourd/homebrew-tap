@@ -24,18 +24,18 @@ class GitOpen < Formula
     sha256 "0000000000000000000000000000000000000000000000000000000000000004"
   end
 
+  conflicts_with "git-open"
+
   def install
     bin.install "git-open"
   end
-
-  conflicts_with "git-open"
 
   test do
     system "git", "clone", "https://github.com/arbourd/git-open.git"
 
     cd "git-open" do
       assert_match "Opening https://github.com/arbourd/git-open",
-                   shell_output("#{bin}/git-open")
+                   shell_output(bin/"git-open")
       assert_match "Opening https://github.com/arbourd/git-open/tree/main/main.go",
                    shell_output("#{bin}/git-open main.go")
       assert_match "Opening https://github.com/arbourd/git-open/commit/71e081deeb92764e1bae203419ac72de1d935d2f",

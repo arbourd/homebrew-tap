@@ -24,12 +24,12 @@ class GitSync < Formula
     sha256 "0000000000000000000000000000000000000000000000000000000000000004"
   end
 
+  conflicts_with "git-extras"
+  conflicts_with "git-sync"
+
   def install
     bin.install "git-sync"
   end
-
-  conflicts_with "git-extras"
-  conflicts_with "git-sync"
 
   test do
     system "git", "clone", "https://github.com/arbourd/git-sync.git"
@@ -38,7 +38,7 @@ class GitSync < Formula
       system "git", "reset", "--hard", "HEAD~1"
       sha = shell_output("git rev-parse HEAD")
 
-      assert_match sha[0..6], shell_output("#{bin}/git-sync")
+      assert_match sha[0..6], shell_output(bin/"git-sync")
       refute_equal sha, shell_output("git rev-parse HEAD")
     end
   end

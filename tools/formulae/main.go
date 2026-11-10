@@ -270,12 +270,12 @@ class {{ .Class }} < Formula
     sha256 "{{ .SHA256 }}"
   end
 {{ end }}
-  def install
+{{ if .Conflicts }}{{ range .Conflicts }}  conflicts_with "{{ . }}"
+{{ end }}
+{{ end }}  def install
 {{ indent 4 (join .Install "\n") }}
   end
-{{ if .Conflicts }}
-{{ range .Conflicts }}  conflicts_with "{{ . }}"
-{{ end }}{{ end }}
+
   test do
 {{ indent 4 .Test }}
   end
