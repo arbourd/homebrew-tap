@@ -6,13 +6,15 @@ on:
     - cron: "17 6 * * *"
 
 permissions:
-  actions: write
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   bump:
     runs-on: macos-latest
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
 
     env:
       HOMEBREW_GITHUB_ACTIONS: 1

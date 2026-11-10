@@ -15,13 +15,15 @@ on:
     - cron: "0 12 * * *"
 
 permissions:
-  actions: write
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v7
