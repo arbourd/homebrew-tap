@@ -232,7 +232,7 @@ func getJSONOnce[T any](client *http.Client, url string, setHeaders func(*http.R
 	if err != nil {
 		return v, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode != http.StatusOK {
 		return v, fmt.Errorf("GET %s: unexpected status: %s", url, res.Status)

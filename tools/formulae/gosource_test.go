@@ -120,7 +120,7 @@ func TestFetchReleases(t *testing.T) {
 				status := tt.responses[min(int(requests.Add(1))-1, len(tt.responses)-1)]
 				w.WriteHeader(status)
 				if status == http.StatusOK {
-					w.Write([]byte(tt.body))
+					_, _ = w.Write([]byte(tt.body))
 				}
 			}))
 			defer srv.Close()
