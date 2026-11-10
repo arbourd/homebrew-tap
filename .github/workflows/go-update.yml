@@ -42,7 +42,7 @@ jobs:
           echo "${formula}" > Formula/go.rb
           version=$(echo "$formula" | grep -oP 'version "\K[^"]+')
 
-          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Create Pull Request
         if: github.event_name != 'pull_request'

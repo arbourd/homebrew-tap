@@ -71,12 +71,12 @@ jobs:
         name: brew uninstall go
         run: |
           versions=$(brew list | grep -E '^go$|^go@' || true)
-          echo $versions
+          echo "$versions"
 
           for v in $versions
           do
             echo "brew uninstall $v"
-            brew uninstall $v
+            brew uninstall "$v"
           done
 
       - name: brew style ${{ matrix.formula }}

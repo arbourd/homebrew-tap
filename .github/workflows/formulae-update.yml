@@ -43,7 +43,7 @@ jobs:
           cache: false
           go-version-file: go.mod
       - id: formulae
-        run: echo "formulae=$(go run ./tools/formulae --list)" >> $GITHUB_OUTPUT
+        run: echo "formulae=$(go run ./tools/formulae --list)" >> "$GITHUB_OUTPUT"
 
   update:
     runs-on: ubuntu-latest
@@ -70,10 +70,10 @@ jobs:
           echo "::endgroup::"
 
           version=$(grep -oP 'version "\K[^"]+' Formula/${{ matrix.formula }}.rb)
-          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
           homepage=$(grep -oP 'homepage "\K[^"]+' Formula/${{ matrix.formula }}.rb)
-          echo "homepage=${homepage}" >> $GITHUB_OUTPUT
+          echo "homepage=${homepage}" >> "$GITHUB_OUTPUT"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
