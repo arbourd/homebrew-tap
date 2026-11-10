@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -18,6 +19,9 @@ func release(name string) Release {
 	r := Release{Tag: "v1.2.3"}
 	for i, p := range platforms {
 		file := fmt.Sprintf("%s-v1.2.3-%s.tar.gz", name, p.Suffix)
+		if u := specs[name].URLs; u != nil {
+			file = path.Base(strings.ReplaceAll(u[p.Suffix], "#{version}", "1.2.3"))
+		}
 		r.Assets = append(r.Assets, Asset{
 			Name:   file,
 			Digest: fmt.Sprintf("sha256:%064d", i+1),

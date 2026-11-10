@@ -13,7 +13,9 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   version and sha256 from the latest GitHub release (asset `digest`). Change the registry (`tools/formulae/formulae.yaml`, including each `repo`) or the template
   in `tools/formulae/main.go`, not the formulae. The workflow matrix comes from `go run ./tools/formulae --list`.
   To add a project: add a `formulae.yaml` entry. Releases must be GoReleaser-style
-  `<name>-v<ver>-<os>-<arch>.tar.gz` assets with a GitHub `digest`; other layouts aren't supported.
+  `<name>-v<ver>-<os>-<arch>.tar.gz` assets with a GitHub `digest`, unless the entry has a `urls` map
+  (platform suffix like `darwin-arm64` -> full URL with `#{version}`, every non-skipped platform required).
+  Assets still need a GitHub `digest`.
   Until each project's GoReleaser `brews:` block is removed, its releases still push these files.
 - `formula.yml` skips Linux for a formula only if it has a bare `depends_on :macos` line.
   A versioned form (`macos: :ventura`) is still tested on Linux.
@@ -30,6 +32,7 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - Generator: `go vet ./... && go test ./... -race && go run ./tools/go` (`go run ./tools/go` hits go.dev).
   `go run ./tools/formulae <name>` hits the GitHub API; set `GITHUB_TOKEN` to avoid rate limits.
 - After changing a template, run `go test ./tools/go ./tools/formulae -update` to regenerate the golden files, then review the diff.
+- Brew tests run with `XDG_CONFIG_HOME` set to a nonexistent `testpath/.config`; tools that need it must `mkpath` it in the formula `test`.
 - Brew: mirror the steps in `formula.yml` / `cask.yml`. Symlink the checkout first
   (`ln -s "$PWD" "$(brew --repository)/Library/Taps/arbourd/homebrew-tap"`) and set
   `HOMEBREW_GITHUB_API_TOKEN` for `--online` audits. If the tap is already installed as a real

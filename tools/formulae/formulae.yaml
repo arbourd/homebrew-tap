@@ -61,3 +61,18 @@ trash:
     - bin.install "trash"
   test: |-
     assert_match "trash, version #{version}", shell_output("#{bin}/trash --version")
+
+opengrep:
+  repo: opengrep/opengrep
+  desc: Static code analysis engine to find bugs and vulnerabilities
+  urls:
+    darwin-arm64: https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_osx_arm64
+    darwin-amd64: https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_osx_x86
+    linux-amd64: https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_manylinux_x86
+    linux-arm64: https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_manylinux_aarch64
+  install:
+    - bin.install Dir["opengrep_*"].first => "opengrep"
+  test: |-
+    # opengrep crashes if XDG_CONFIG_HOME (set by brew to testpath/.config) does not exist.
+    (testpath/".config").mkpath
+    assert_match version.to_s, shell_output("#{bin}/opengrep --version")
