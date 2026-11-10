@@ -29,7 +29,6 @@ var linuxArm = Platform{"linux-arm", "OS.linux? && Hardware::CPU.arm? && !Hardwa
 var (
 	goVersionRe  = regexp.MustCompile(`^go[0-9]+\.[0-9]+(\.[0-9]+)?$`)
 	goFilenameRe = regexp.MustCompile(`^go[0-9][0-9A-Za-z.]*\.[a-z0-9]+-[a-z0-9]+\.tar\.gz$`)
-	sha256Re     = regexp.MustCompile(`^[0-9a-f]{64}$`)
 )
 
 // fetchGoReleases retrieves the release list from url, trying up to maxAttempts times.

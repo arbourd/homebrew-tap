@@ -17,6 +17,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"slices"
 	"strings"
 	"text/template"
@@ -79,6 +80,9 @@ const (
 
 // retryDelay is the base wait between attempts; it grows linearly. A var so tests can zero it.
 var retryDelay = time.Second
+
+// sha256Re checks the digests written into formulae.
+var sha256Re = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 //go:embed formulae.yaml
 var specsYAML []byte
