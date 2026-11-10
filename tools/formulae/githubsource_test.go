@@ -54,7 +54,7 @@ func TestFetchRelease(t *testing.T) {
 			http.Error(w, "no auth", http.StatusUnauthorized)
 			return
 		}
-		fmt.Fprint(w, `{"tag_name":"v1.2.3","assets":[{"name":"a","digest":"sha256:abc"}]}`)
+		_, _ = fmt.Fprint(w, `{"tag_name":"v1.2.3","assets":[{"name":"a","digest":"sha256:abc"}]}`)
 	}))
 	defer srv.Close()
 
@@ -84,7 +84,7 @@ func TestFetchReleaseRetries(t *testing.T) {
 			http.Error(w, "boom", http.StatusBadGateway)
 			return
 		}
-		fmt.Fprint(w, `{"tag_name":"v1.2.3"}`)
+		_, _ = fmt.Fprint(w, `{"tag_name":"v1.2.3"}`)
 	}))
 	defer srv.Close()
 
