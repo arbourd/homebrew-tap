@@ -31,15 +31,16 @@ class GitOpen < Formula
   end
 
   test do
-    system "git", "clone", "https://github.com/arbourd/git-open.git"
+    url = "https://github.com/arbourd/git-open"
+    system "git", "init", "-b", "main"
+    system "git", "remote", "add", "origin", "#{url}.git"
+    system "git", "-c", "user.name=test", "-c", "user.email=test@example.com",
+           "commit", "--allow-empty", "-m", "init"
+    sha = shell_output("git rev-parse HEAD").strip
+    touch "main.go"
 
-    cd "git-open" do
-      assert_match "Opening https://github.com/arbourd/git-open",
-                   shell_output(bin/"git-open")
-      assert_match "Opening https://github.com/arbourd/git-open/tree/main/main.go",
-                   shell_output("#{bin}/git-open main.go")
-      assert_match "Opening https://github.com/arbourd/git-open/commit/71e081deeb92764e1bae203419ac72de1d935d2f",
-                   shell_output("#{bin}/git-open 71e081deeb92764e1bae203419ac72de1d935d2f")
-    end
+    assert_match "Opening #{url} ", shell_output(bin/"git-open")
+    assert_match "Opening #{url}/tree/main/main.go ", shell_output("#{bin}/git-open main.go")
+    assert_match "Opening #{url}/commit/#{sha} ", shell_output("#{bin}/git-open #{sha}")
   end
 end
