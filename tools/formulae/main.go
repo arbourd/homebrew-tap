@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"slices"
 	"strings"
 	"text/template"
@@ -17,7 +18,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Spec describes a formula. Releases follow GoReleaser's `<name>-v<ver>-<os>-<arch>.tar.gz` layout.
+// Spec describes a formula. Releases follow GoReleaser's `<name>-v<ver>-<os>-<arch>.tar.gz` layout
+// unless URLs overrides them.
 type Spec struct {
 	Repo      string   `yaml:"repo"`
 	Desc      string   `yaml:"desc"`
@@ -25,6 +27,9 @@ type Spec struct {
 	Conflicts []string `yaml:"conflicts"`
 	Install   []string `yaml:"install"`
 	Test      string   `yaml:"test"`
+	// URLs maps a platform suffix (e.g. darwin-arm64) to its download URL, written as it appears
+	// in the formula (with `#{version}`). Every non-skipped platform must be listed.
+	URLs map[string]string `yaml:"urls"`
 }
 
 type Asset struct {
@@ -55,6 +60,7 @@ var platforms = []Platform{
 type File struct {
 	SHA256   string
 	Platform Platform
+	URL      string
 }
 
 type Formula struct {
@@ -103,6 +109,11 @@ func (s Spec) validate() error {
 		return fmt.Errorf("install is required")
 	case s.Test == "":
 		return fmt.Errorf("test is required")
+	}
+	for _, p := range platforms {
+		if s.URLs != nil && (!s.MacOnly || p.Mac) && s.URLs[p.Suffix] == "" {
+			return fmt.Errorf("urls is missing %s", p.Suffix)
+		}
 	}
 	return nil
 }
@@ -201,7 +212,11 @@ func buildFormula(name string, spec Spec, r Release) (Formula, error) {
 		if spec.MacOnly && !p.Mac {
 			continue
 		}
-		asset := fmt.Sprintf("%s-v%s-%s.tar.gz", name, version, p.Suffix)
+		url := fmt.Sprintf("https://github.com/%s/releases/download/v#{version}/%s-v#{version}-%s.tar.gz", spec.Repo, name, p.Suffix)
+		if spec.URLs != nil {
+			url = spec.URLs[p.Suffix]
+		}
+		asset := path.Base(strings.ReplaceAll(url, "#{version}", version))
 		i := slices.IndexFunc(r.Assets, func(a Asset) bool { return a.Name == asset })
 		if i < 0 {
 			problems = append(problems, asset+" is missing")
@@ -214,7 +229,7 @@ func buildFormula(name string, spec Spec, r Release) (Formula, error) {
 			problems = append(problems, asset+" has no sha256 digest")
 			continue
 		}
-		formula.Files = append(formula.Files, File{SHA256: sha, Platform: p})
+		formula.Files = append(formula.Files, File{SHA256: sha, Platform: p, URL: url})
 	}
 	if len(problems) > 0 {
 		return Formula{}, fmt.Errorf("%s %s: %s", name, r.Tag, strings.Join(problems, ", "))
@@ -266,7 +281,7 @@ class {{ .Class }} < Formula
 {{- end }}
 {{ range .Files }}
   if {{ .Platform.Condition }}
-    url "https://github.com/{{ $.Repo }}/releases/download/v#{version}/{{ $.Name }}-v#{version}-{{ .Platform.Suffix }}.tar.gz"
+    url "{{ .URL }}"
     sha256 "{{ .SHA256 }}"
   end
 {{ end }}
