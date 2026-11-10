@@ -6,12 +6,26 @@
   "additionalProperties": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["repo", "desc", "install", "test"],
+    "required": ["desc", "install", "test"],
     "properties": {
+      "source": {
+        "enum": ["go"],
+        "description": "Where releases come from. Omit for GitHub; `go` reads go.dev."
+      },
       "repo": {
         "type": "string",
         "pattern": "^[^/]+/[^/]+$",
         "description": "GitHub repository (owner/name) whose latest release provides the version and sha256."
+      },
+      "homepage": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Formula homepage. Defaults to the GitHub repository; required for `source: go`."
+      },
+      "release_notes": {
+        "type": "string",
+        "pattern": "#\\{version\\}",
+        "description": "Release notes link for the PR body; `#{version}` is replaced by the version. Defaults to the GitHub release; required for `source: go`."
       },
       "desc": {
         "type": "string",
@@ -56,21 +70,47 @@
         "minLength": 1
       }
     },
-    "if": {
-      "properties": {
-        "mac_only": {
-          "const": true
+    "allOf": [
+      {
+        "if": {
+          "properties": {
+            "mac_only": {
+              "const": true
+            }
+          },
+          "required": ["mac_only"]
+        },
+        "else": {
+          "properties": {
+            "urls": {
+              "required": ["linux-amd64", "linux-arm64"]
+            }
+          }
         }
       },
-      "required": ["mac_only"]
-    },
-    "else": {
-      "properties": {
-        "urls": {
-          "required": ["linux-amd64", "linux-arm64"]
+      {
+        "if": {
+          "properties": {
+            "source": {
+              "const": "go"
+            }
+          },
+          "required": ["source"]
+        },
+        "then": {
+          "required": ["homepage", "release_notes"],
+          "properties": {
+            "repo": false,
+            "urls": false,
+            "mac_only": false,
+            "conflicts": false
+          }
+        },
+        "else": {
+          "required": ["repo"]
         }
       }
-    }
+    ]
   },
   "propertyNames": {
     "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"

@@ -1,0 +1,71 @@
+package main
+
+import (
+	"fmt"
+	"regexp"
+	"slices"
+	"strings"
+)
+
+const goDL = "https://go.dev/dl/"
+
+type goFile struct {
+	Filename string `json:"filename"`
+	OS       string `json:"os"`
+	Arch     string `json:"arch"`
+	SHA256   string `json:"sha256"`
+	Kind     string `json:"kind"`
+}
+
+type goRelease struct {
+	Version string   `json:"version"`
+	Files   []goFile `json:"files"`
+}
+
+// Only Go ships a 32-bit ARM Linux build.
+var linuxArm = Platform{"linux-arm", "OS.linux? && Hardware::CPU.arm? && !Hardware::CPU.is_64_bit?", false}
+
+// These values are written into Formula/go.rb and the PR, so reject anything unexpected.
+var (
+	goVersionRe  = regexp.MustCompile(`^go[0-9]+\.[0-9]+(\.[0-9]+)?$`)
+	goFilenameRe = regexp.MustCompile(`^go[0-9][0-9A-Za-z.]*\.[a-z0-9]+-[a-z0-9]+\.tar\.gz$`)
+	sha256Re     = regexp.MustCompile(`^[0-9a-f]{64}$`)
+)
+
+// fetchGoReleases retrieves the release list from url, trying up to maxAttempts times.
+func fetchGoReleases(url string) ([]goRelease, error) {
+	return getJSON[[]goRelease](url, nil)
+}
+
+func buildGoFormula(name string, spec Spec, r goRelease) (Formula, error) {
+	if !goVersionRe.MatchString(r.Version) {
+		return Formula{}, fmt.Errorf("invalid version %q", r.Version)
+	}
+	formula := Formula{Spec: spec, Name: name, Class: class(name), Version: strings.TrimPrefix(r.Version, "go")}
+	var missing []string
+	for _, p := range append(slices.Clone(platforms), linuxArm) {
+		os, arch, _ := strings.Cut(p.Suffix, "-")
+		if p == linuxArm {
+			arch = "armv6l"
+		}
+		i := slices.IndexFunc(r.Files, func(f goFile) bool {
+			return f.Kind == "archive" && f.OS == os && f.Arch == arch
+		})
+		if i < 0 {
+			missing = append(missing, os+"/"+arch)
+			continue
+		}
+		f := r.Files[i]
+		if !goFilenameRe.MatchString(f.Filename) {
+			return Formula{}, fmt.Errorf("invalid filename %q", f.Filename)
+		}
+		if !sha256Re.MatchString(f.SHA256) {
+			return Formula{}, fmt.Errorf("invalid sha256 %q for %s", f.SHA256, f.Filename)
+		}
+		formula.Files = append(formula.Files, File{SHA256: f.SHA256, Platform: p, URL: goDL + f.Filename})
+	}
+	if len(missing) > 0 {
+		return Formula{}, fmt.Errorf("%s has no archive for: %s", r.Version, strings.Join(missing, ", "))
+	}
+	return formula, nil
+}
