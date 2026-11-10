@@ -11,7 +11,7 @@ import (
 )
 
 // The tag is written into the formula and the PR, so reject anything unexpected.
-var tagRe = regexp.MustCompile(`^v?[0-9][0-9A-Za-z.+-]*$`)
+var tagRe = regexp.MustCompile(`^v?[0-9]+\.[0-9]+(\.[0-9]+)?$`)
 
 type Asset struct {
 	Name   string `json:"name"`

@@ -97,6 +97,7 @@ func TestFetchReleaseRetries(t *testing.T) {
 func TestBuildFormulaInvalid(t *testing.T) {
 	tests := map[string]func(*Release){
 		"tag":              func(r *Release) { r.Tag = "v1.2.3\"\nevil" },
+		"tag prerelease":   func(r *Release) { r.Tag = "v1.2.3-rc1" },
 		"digest empty":     func(r *Release) { r.Assets[0].Digest = "sha256:" },
 		"digest not hex":   func(r *Release) { r.Assets[0].Digest = "sha256:" + strings.Repeat("z", 64) },
 		"digest too short": func(r *Release) { r.Assets[0].Digest = "sha256:abc" },
