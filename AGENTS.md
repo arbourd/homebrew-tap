@@ -19,7 +19,7 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   (`go-`, `<name>-<digit>`, `bump-`); keep that in sync with each `branch:` in the workflows.
 - `formula.yml` skips Linux for a formula only if it has a bare `depends_on :macos` line.
   A versioned form (`macos: :ventura`) is still tested on Linux.
-- Pin third-party actions to release tags, not SHAs. Dependabot bumps them.
+- Pin third-party actions to release tags, not SHAs. Renovate bumps them (`.github/renovate.json`).
 - `cask-bump.yml` bumps `Casks/orca.rb`. Keep `--full-name` on `brew bump --cask`:
   homebrew/cask has an unrelated `orca`, and a bare name makes `bump-cask-pr` target that one.
 - `cask.yml` needs at least one cask in `Casks/` (an empty matrix errors). If the last cask is
