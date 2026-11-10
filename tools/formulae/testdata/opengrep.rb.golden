@@ -32,5 +32,17 @@ class Opengrep < Formula
     # opengrep crashes if XDG_CONFIG_HOME (set by brew to testpath/.config) does not exist.
     (testpath/".config").mkpath
     assert_match version.to_s, shell_output("#{bin}/opengrep --version")
+
+    (testpath/"rule.yml").write <<~YAML
+      rules:
+        - id: no-eval
+          pattern: eval(...)
+          message: no eval
+          languages: [python]
+          severity: WARNING
+    YAML
+    (testpath/"test.py").write "eval(input())\n"
+    assert_match "1 Code Finding",
+                 shell_output("#{bin}/opengrep scan --config rule.yml test.py")
   end
 end

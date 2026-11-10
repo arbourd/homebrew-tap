@@ -33,6 +33,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   `go run ./tools/formulae <name>` hits the GitHub API; set `GITHUB_TOKEN` to avoid rate limits.
 - After changing a template, run `go test ./tools/go ./tools/formulae -update` to regenerate the golden files, then review the diff.
 - Brew tests run with `XDG_CONFIG_HOME` set to a nonexistent `testpath/.config`; tools that need it must `mkpath` it in the formula `test`.
+- Brew tests are sandboxed to `testpath`: writes elsewhere (e.g. the real Trash) fail with a permission error. Prefer offline tests (local git repos over cloning from GitHub).
+- To run one formula's test: `go run ./tools/formulae <name> > "$(brew --repository)/Library/Taps/arbourd/homebrew-tap/Formula/<name>.rb"`, then `brew test arbourd/tap/<name>` (it must be installed), then `git checkout` the file in the clone.
 - Brew: mirror the steps in `formula.yml` / `cask.yml`. Symlink the checkout first
   (`ln -s "$PWD" "$(brew --repository)/Library/Taps/arbourd/homebrew-tap"`) and set
   `HOMEBREW_GITHUB_API_TOKEN` for `--online` audits. If the tap is already installed as a real
