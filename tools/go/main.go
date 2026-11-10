@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 	"text/template"
@@ -72,6 +73,13 @@ const (
 
 // retryDelay is the base wait between attempts; it grows linearly. A var so tests can zero it.
 var retryDelay = time.Second
+
+// These values are written into Formula/go.rb and the PR, so reject anything unexpected.
+var (
+	versionRe  = regexp.MustCompile(`^go[0-9]+\.[0-9]+(\.[0-9]+)?$`)
+	filenameRe = regexp.MustCompile(`^go[0-9][0-9A-Za-z.]*\.[a-z0-9]+-[a-z0-9]+\.tar\.gz$`)
+	sha256Re   = regexp.MustCompile(`^[0-9a-f]{64}$`)
+)
 
 var osArchMap = map[string]map[string]OSArch{
 	"darwin": {"arm64": DarwinArm64, "amd64": DarwinAmd64},
@@ -148,6 +156,9 @@ func renderFormula(formula Formula) (string, error) {
 }
 
 func buildFormula(latest Release) (Formula, error) {
+	if !versionRe.MatchString(latest.Version) {
+		return Formula{}, fmt.Errorf("invalid version %q", latest.Version)
+	}
 	formula := Formula{Version: strings.TrimPrefix(latest.Version, "go")}
 	var missing []string
 	for os, archs := range osArchMap {
@@ -160,6 +171,12 @@ func buildFormula(latest Release) (Formula, error) {
 				continue
 			}
 			f := latest.Files[i]
+			if !filenameRe.MatchString(f.Filename) {
+				return Formula{}, fmt.Errorf("invalid filename %q", f.Filename)
+			}
+			if !sha256Re.MatchString(f.SHA256) {
+				return Formula{}, fmt.Errorf("invalid sha256 %q for %s", f.SHA256, f.Filename)
+			}
 			formula.Files = append(formula.Files, File{URL: baseURL + f.Filename, SHA256: f.SHA256, OSArch: osArch})
 		}
 	}

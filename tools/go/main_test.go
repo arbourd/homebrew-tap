@@ -7,22 +7,26 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync/atomic"
 	"testing"
 )
 
 var update = flag.Bool("update", false, "update golden files")
 
+// sha returns a valid sha256 made of the hex digit c.
+func sha(c string) string { return strings.Repeat(c, 64) }
+
 // supportedRelease returns a release with one archive for each supported platform.
 func supportedRelease() Release {
 	return Release{
 		Version: "go1.26.2",
 		Files: []ReleaseFile{
-			{Filename: "go1.26.2.darwin-arm64.tar.gz", OS: "darwin", Arch: "arm64", SHA256: "aaa", Kind: "archive"},
-			{Filename: "go1.26.2.darwin-amd64.tar.gz", OS: "darwin", Arch: "amd64", SHA256: "bbb", Kind: "archive"},
-			{Filename: "go1.26.2.linux-amd64.tar.gz", OS: "linux", Arch: "amd64", SHA256: "ccc", Kind: "archive"},
-			{Filename: "go1.26.2.linux-arm64.tar.gz", OS: "linux", Arch: "arm64", SHA256: "ddd", Kind: "archive"},
-			{Filename: "go1.26.2.linux-armv6l.tar.gz", OS: "linux", Arch: "armv6l", SHA256: "eee", Kind: "archive"},
+			{Filename: "go1.26.2.darwin-arm64.tar.gz", OS: "darwin", Arch: "arm64", SHA256: sha("a"), Kind: "archive"},
+			{Filename: "go1.26.2.darwin-amd64.tar.gz", OS: "darwin", Arch: "amd64", SHA256: sha("b"), Kind: "archive"},
+			{Filename: "go1.26.2.linux-amd64.tar.gz", OS: "linux", Arch: "amd64", SHA256: sha("c"), Kind: "archive"},
+			{Filename: "go1.26.2.linux-arm64.tar.gz", OS: "linux", Arch: "arm64", SHA256: sha("d"), Kind: "archive"},
+			{Filename: "go1.26.2.linux-armv6l.tar.gz", OS: "linux", Arch: "armv6l", SHA256: sha("e"), Kind: "archive"},
 		},
 	}
 }
@@ -61,8 +65,8 @@ func TestBuildFormula(t *testing.T) {
 	// Unsupported entries are interleaved to check they are filtered out.
 	release := supportedRelease()
 	release.Files = append(release.Files,
-		ReleaseFile{Filename: "go1.26.2.src.tar.gz", SHA256: "fff", Kind: "source"},
-		ReleaseFile{Filename: "go1.26.2.windows-amd64.zip", OS: "windows", Arch: "amd64", SHA256: "ggg", Kind: "archive"},
+		ReleaseFile{Filename: "go1.26.2.src.tar.gz", SHA256: sha("f"), Kind: "source"},
+		ReleaseFile{Filename: "go1.26.2.windows-amd64.zip", OS: "windows", Arch: "amd64", SHA256: sha("0"), Kind: "archive"},
 	)
 
 	got, err := buildFormula(release)
@@ -75,14 +79,35 @@ func TestBuildFormula(t *testing.T) {
 	}
 
 	want := []File{
-		{URL: baseURL + "go1.26.2.darwin-arm64.tar.gz", SHA256: "aaa", OSArch: DarwinArm64},
-		{URL: baseURL + "go1.26.2.darwin-amd64.tar.gz", SHA256: "bbb", OSArch: DarwinAmd64},
-		{URL: baseURL + "go1.26.2.linux-amd64.tar.gz", SHA256: "ccc", OSArch: LinuxAmd64},
-		{URL: baseURL + "go1.26.2.linux-arm64.tar.gz", SHA256: "ddd", OSArch: LinuxArm64},
-		{URL: baseURL + "go1.26.2.linux-armv6l.tar.gz", SHA256: "eee", OSArch: LinuxArm},
+		{URL: baseURL + "go1.26.2.darwin-arm64.tar.gz", SHA256: sha("a"), OSArch: DarwinArm64},
+		{URL: baseURL + "go1.26.2.darwin-amd64.tar.gz", SHA256: sha("b"), OSArch: DarwinAmd64},
+		{URL: baseURL + "go1.26.2.linux-amd64.tar.gz", SHA256: sha("c"), OSArch: LinuxAmd64},
+		{URL: baseURL + "go1.26.2.linux-arm64.tar.gz", SHA256: sha("d"), OSArch: LinuxArm64},
+		{URL: baseURL + "go1.26.2.linux-armv6l.tar.gz", SHA256: sha("e"), OSArch: LinuxArm},
 	}
 	if !slices.Equal(got.Files, want) {
 		t.Errorf("Files = %+v, want %+v", got.Files, want)
+	}
+}
+
+func TestBuildFormulaInvalid(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*Release)
+	}{
+		{"version", func(r *Release) { r.Version = "go1.26.2\nexit" }},
+		{"filename", func(r *Release) { r.Files[0].Filename = "go1.26.2.darwin-arm64.tar.gz\" evil" }},
+		{"sha256 too short", func(r *Release) { r.Files[0].SHA256 = "aaa" }},
+		{"sha256 not hex", func(r *Release) { r.Files[0].SHA256 = sha("z") }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			release := supportedRelease()
+			tt.mutate(&release)
+			if _, err := buildFormula(release); err == nil {
+				t.Error("buildFormula() error = nil, want validation error")
+			}
+		})
 	}
 }
 

@@ -6,27 +6,27 @@ class Go < Formula
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://go.dev/dl/go1.26.2.darwin-arm64.tar.gz"
-    sha256 "aaa"
+    sha256 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   end
 
   if OS.mac? && Hardware::CPU.intel?
     url "https://go.dev/dl/go1.26.2.darwin-amd64.tar.gz"
-    sha256 "bbb"
+    sha256 "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   end
 
   if OS.linux? && Hardware::CPU.intel?
     url "https://go.dev/dl/go1.26.2.linux-amd64.tar.gz"
-    sha256 "ccc"
+    sha256 "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
   end
 
   if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
     url "https://go.dev/dl/go1.26.2.linux-arm64.tar.gz"
-    sha256 "ddd"
+    sha256 "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
   end
 
   if OS.linux? && Hardware::CPU.arm? && !Hardware::CPU.is_64_bit?
     url "https://go.dev/dl/go1.26.2.linux-armv6l.tar.gz"
-    sha256 "eee"
+    sha256 "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
   end
 
   def install
