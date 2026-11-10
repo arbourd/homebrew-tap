@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - .github/workflows/go-build.yml
+      - .github/workflows/formulae-update.yml
       - go.*
       - tools/formulae/**
   push:
     paths:
       - .github/workflows/go-build.yml
+      - .github/workflows/formulae-update.yml
       - go.*
       - tools/formulae/**
     branches:
