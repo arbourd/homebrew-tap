@@ -25,5 +25,9 @@ class Trash < Formula
 
   test do
     assert_match "trash, version #{version}", shell_output("#{bin}/trash --version")
+
+    # The brew sandbox forbids writing to the real Trash, so only the error path can run.
+    assert_match "could not be moved to the trash",
+                 shell_output("#{bin}/trash #{testpath}/missing 2>&1", 1)
   end
 end
