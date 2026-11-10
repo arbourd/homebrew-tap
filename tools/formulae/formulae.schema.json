@@ -9,7 +9,7 @@
     "required": ["desc", "install", "test"],
     "properties": {
       "source": {
-        "enum": ["go"],
+        "enum": ["", "go"],
         "description": "Where releases come from. Omit for GitHub; `go` reads go.dev."
       },
       "repo": {
@@ -102,7 +102,7 @@
           "properties": {
             "repo": false,
             "urls": false,
-            "mac_only": false,
+            "mac_only": {"const": false},
             "conflicts": false
           }
         },

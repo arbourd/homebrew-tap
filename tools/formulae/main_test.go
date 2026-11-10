@@ -156,6 +156,8 @@ func TestSchema(t *testing.T) {
 			}
 		}
 		for name, src := range map[string]string{
+			"empty source":           "a:\n  source: ''\n  repo: o/n\n  desc: d\n  install: [i]\n  test: t\n",
+			"go mac_only false":      "a:\n  source: go\n  mac_only: false\n  homepage: h\n  release_notes: n#{version}\n  desc: d\n  install: [i]\n  test: t\n",
 			"go":                     "a:\n  source: go\n  homepage: h\n  release_notes: n#{version}\n  desc: d\n  install: [i]\n  test: t\n",
 			"urls":                   "a:\n" + base + urls,
 			"mac_only without linux": "a:\n" + base + "  mac_only: true\n  urls: {darwin-arm64: a, darwin-amd64: a}\n",

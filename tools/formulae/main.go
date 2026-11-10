@@ -205,13 +205,13 @@ func getJSON[T any](url string, setHeaders func(*http.Request)) (T, error) {
 		if v, err = getJSONOnce[T](client, url, setHeaders); err == nil {
 			return v, nil
 		}
-		log.Printf("GET %s: attempt %d/%d failed: %v", url, attempt, maxAttempts, err)
+		log.Printf("attempt %d/%d failed: %v", attempt, maxAttempts, err)
 		if attempt < maxAttempts {
 			time.Sleep(time.Duration(attempt) * retryDelay)
 		}
 	}
 	var zero T
-	return zero, fmt.Errorf("GET %s: %w", url, err)
+	return zero, err
 }
 
 func getJSONOnce[T any](client *http.Client, url string, setHeaders func(*http.Request)) (T, error) {
@@ -231,10 +231,10 @@ func getJSONOnce[T any](client *http.Client, url string, setHeaders func(*http.R
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return v, fmt.Errorf("unexpected status: %s", res.Status)
+		return v, fmt.Errorf("GET %s: unexpected status: %s", url, res.Status)
 	}
 	if err := json.NewDecoder(res.Body).Decode(&v); err != nil {
-		return v, fmt.Errorf("cannot decode JSON: %w", err)
+		return v, fmt.Errorf("GET %s: cannot decode JSON: %w", url, err)
 	}
 	return v, nil
 }
