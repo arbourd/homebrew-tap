@@ -124,23 +124,45 @@ var specsYAML []byte
 var specs = loadSpecs()
 
 func loadSpecs() map[string]Spec {
+	m, err := parseSpecs(specsYAML)
+	if err != nil {
+		panic(err)
+	}
+	return m
+}
+
+// parseSpecs decodes and validates the registry, filling in the default release notes.
+func parseSpecs(src []byte) (map[string]Spec, error) {
 	var m map[string]Spec
-	dec := yaml.NewDecoder(bytes.NewReader(specsYAML))
+	dec := yaml.NewDecoder(bytes.NewReader(src))
 	dec.KnownFields(true)
 	if err := dec.Decode(&m); err != nil {
-		panic(fmt.Sprintf("cannot parse formulae.yaml: %v", err))
+		return nil, fmt.Errorf("cannot parse formulae.yaml: %w", err)
 	}
 	for name, spec := range m {
-		if err := spec.validate(); err != nil {
-			panic(fmt.Sprintf("formulae.yaml: %s: %v", name, err))
+		if err := validateEntry(name, spec); err != nil {
+			return nil, fmt.Errorf("formulae.yaml: %s: %w", name, err)
 		}
 		if spec.ReleaseNotes == "" {
 			spec.ReleaseNotes = "https://github.com/" + spec.Repo + "/releases/tag/v#{version}"
 			m[name] = spec
 		}
 	}
-	return m
+	return m, nil
 }
+
+// nameRe matches the schema's propertyNames pattern.
+var nameRe = regexp.MustCompile(`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`)
+
+func validateEntry(name string, s Spec) error {
+	if !nameRe.MatchString(name) {
+		return fmt.Errorf("name must start with a letter and be lowercase words joined by single hyphens")
+	}
+	return s.validate()
+}
+
+// repoRe matches the schema's repo pattern.
+var repoRe = regexp.MustCompile(`^[^/]+/[^/]+$`)
 
 func (s Spec) validate() error {
 	switch {
@@ -154,7 +176,7 @@ func (s Spec) validate() error {
 		return fmt.Errorf("release_notes is required for source go")
 	case s.ReleaseNotes != "" && !strings.Contains(s.ReleaseNotes, "#{version}"):
 		return fmt.Errorf("release_notes must contain #{version}")
-	case s.Source == "github" && (strings.Count(s.Repo, "/") != 1 || strings.HasPrefix(s.Repo, "/") || strings.HasSuffix(s.Repo, "/")):
+	case s.Source == "github" && !repoRe.MatchString(s.Repo):
 		return fmt.Errorf("repo %q must be owner/name", s.Repo)
 	case s.Desc == "":
 		return fmt.Errorf("desc is required")
@@ -162,6 +184,8 @@ func (s Spec) validate() error {
 		return fmt.Errorf("install is required")
 	case s.Test == "":
 		return fmt.Errorf("test is required")
+	case slices.Contains(s.Install, ""):
+		return fmt.Errorf("install lines must not be empty")
 	}
 	if len(s.Platforms) == 0 {
 		return fmt.Errorf("platforms is required")
