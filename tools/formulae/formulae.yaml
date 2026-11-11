@@ -1,15 +1,25 @@
 # yaml-language-server: $schema=formulae.schema.json
 # One entry per formula, keyed by formula name. The formulae-update.yml matrix is built from these keys.
 git-get:
+  source: github
   repo: arbourd/git-get
+
   desc: Go gets your code
+  homepage: https://github.com/arbourd/git-get
   conflicts: [git-extras]
+  platforms:
+    darwin-arm64: git-get-v#{version}-darwin-arm64.tar.gz
+    darwin-amd64: git-get-v#{version}-darwin-amd64.tar.gz
+    linux-amd64: git-get-v#{version}-linux-amd64.tar.gz
+    linux-arm64: git-get-v#{version}-linux-arm64.tar.gz
+
   install:
     - bin.install "git-get"
     - man1.install "man/git-get.1"
     - bash_completion.install "completions/git-get.bash" => "git-get"
     - zsh_completion.install "completions/git-get.zsh" => "_git_get"
     - fish_completion.install "completions/git-get.fish"
+
   test: |-
     repo = "github.com/arbourd/git-get"
     assert_match "#{testpath}/src/#{repo}", shell_output("#{bin}/git-get #{repo}")
@@ -19,11 +29,21 @@ git-get:
     end
 
 git-open:
+  source: github
   repo: arbourd/git-open
+
   desc: Opens your Git repository in your browser
+  homepage: https://github.com/arbourd/git-open
   conflicts: [git-open]
+  platforms:
+    darwin-arm64: git-open-v#{version}-darwin-arm64.tar.gz
+    darwin-amd64: git-open-v#{version}-darwin-amd64.tar.gz
+    linux-amd64: git-open-v#{version}-linux-amd64.tar.gz
+    linux-arm64: git-open-v#{version}-linux-arm64.tar.gz
+
   install:
     - bin.install "git-open"
+
   test: |-
     url = "https://github.com/arbourd/git-open"
     system "git", "init", "-b", "main"
@@ -38,11 +58,21 @@ git-open:
     assert_match "Opening #{url}/commit/#{sha} ", shell_output("#{bin}/git-open #{sha}")
 
 git-sync:
+  source: github
   repo: arbourd/git-sync
+
   desc: Updates your branches
+  homepage: https://github.com/arbourd/git-sync
   conflicts: [git-extras, git-sync]
+  platforms:
+    darwin-arm64: git-sync-v#{version}-darwin-arm64.tar.gz
+    darwin-amd64: git-sync-v#{version}-darwin-amd64.tar.gz
+    linux-amd64: git-sync-v#{version}-linux-amd64.tar.gz
+    linux-arm64: git-sync-v#{version}-linux-arm64.tar.gz
+
   install:
     - bin.install "git-sync"
+
   test: |-
     system "git", "clone", "https://github.com/arbourd/git-sync.git"
 
@@ -55,12 +85,19 @@ git-sync:
     end
 
 trash:
+  source: github
   repo: arbourd/trash
+
   desc: Safely move items to macOS trash asynchronously
-  mac_only: true
+  homepage: https://github.com/arbourd/trash
   conflicts: [macos-trash, trash, trash-cli]
+  platforms:
+    darwin-arm64: trash-v#{version}-darwin-arm64.tar.gz
+    darwin-amd64: trash-v#{version}-darwin-amd64.tar.gz
+
   install:
     - bin.install "trash"
+
   test: |-
     assert_match "trash, version #{version}", shell_output("#{bin}/trash --version")
 
@@ -69,15 +106,20 @@ trash:
                  shell_output("#{bin}/trash #{testpath}/missing 2>&1", 1)
 
 opengrep:
+  source: github
   repo: opengrep/opengrep
+
   desc: Static code analysis engine to find bugs and vulnerabilities
-  urls:
-    darwin-arm64: https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_osx_arm64
-    darwin-amd64: https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_osx_x86
-    linux-amd64: https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_manylinux_x86
-    linux-arm64: https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_manylinux_aarch64
+  homepage: https://github.com/opengrep/opengrep
+  platforms:
+    darwin-arm64: opengrep_osx_arm64
+    darwin-amd64: opengrep_osx_x86
+    linux-amd64: opengrep_manylinux_x86
+    linux-arm64: opengrep_manylinux_aarch64
+
   install:
     - bin.install Dir["opengrep_*"].first => "opengrep"
+
   test: |-
     # opengrep crashes if XDG_CONFIG_HOME (set by brew to testpath/.config) does not exist.
     (testpath/".config").mkpath
@@ -97,12 +139,15 @@ opengrep:
 
 go:
   source: go
+
+  desc: Open source programming language to build simple/reliable/efficient software
   homepage: https://go.dev/
   release_notes: https://go.dev/doc/devel/release#go#{version}
-  desc: Open source programming language to build simple/reliable/efficient software
+
   install:
     - libexec.install Dir["*"]
     - bin.install_symlink Dir[libexec/"bin/go*"]
+
   test: |-
     (testpath/"hello.go").write <<~EOS
       package main

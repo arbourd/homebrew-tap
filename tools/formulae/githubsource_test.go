@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"path"
 	"strings"
 	"testing"
 )
@@ -13,12 +12,12 @@ import (
 func release(name string) Release {
 	r := Release{Tag: "v1.2.3"}
 	for i, p := range platforms {
-		file := fmt.Sprintf("%s-v1.2.3-%s.tar.gz", name, p.Suffix)
-		if u := specs[name].URLs; u != nil {
-			file = path.Base(strings.ReplaceAll(u[p.Suffix], "#{version}", "1.2.3"))
+		file, ok := specs[name].Platforms[p.Suffix]
+		if !ok {
+			continue
 		}
 		r.Assets = append(r.Assets, Asset{
-			Name:   file,
+			Name:   strings.ReplaceAll(file, "#{version}", "1.2.3"),
 			Digest: fmt.Sprintf("sha256:%064d", i+1),
 		})
 	}
@@ -97,6 +96,7 @@ func TestFetchReleaseRetries(t *testing.T) {
 func TestBuildFormulaInvalid(t *testing.T) {
 	tests := map[string]func(*Release){
 		"tag":              func(r *Release) { r.Tag = "v1.2.3\"\nevil" },
+		"tag no v":         func(r *Release) { r.Tag = "1.2.3" },
 		"tag prerelease":   func(r *Release) { r.Tag = "v1.2.3-rc1" },
 		"digest empty":     func(r *Release) { r.Assets[0].Digest = "sha256:" },
 		"digest not hex":   func(r *Release) { r.Assets[0].Digest = "sha256:" + strings.Repeat("z", 64) },
@@ -110,5 +110,42 @@ func TestBuildFormulaInvalid(t *testing.T) {
 				t.Error("buildFormula() error = nil, want validation error")
 			}
 		})
+	}
+}
+
+// A release without a macOS Intel build keeps its Intel Mac out of the formula and constrains macOS to arm64.
+func TestBuildFormulaNoDarwinIntel(t *testing.T) {
+	spec := Spec{Source: "github", Repo: "o/tool", Homepage: "h", Desc: "d", Install: []string{"i"}, Test: "t", Platforms: map[string]string{
+		"darwin-arm64": "tool-macos-arm64",
+		"linux-amd64":  "tool-linux-amd64",
+		"linux-arm64":  "tool-linux-arm64",
+	}}
+	r := Release{Tag: "v1.2.3"}
+	for i, name := range []string{"tool-macos-arm64", "tool-linux-amd64", "tool-linux-arm64", "tool-macos-x86"} {
+		r.Assets = append(r.Assets, Asset{Name: name, Digest: fmt.Sprintf("sha256:%064d", i+1)})
+	}
+
+	f, err := buildFormula("tool", spec, r)
+	if err != nil {
+		t.Fatalf("buildFormula() error: %v", err)
+	}
+	got, err := renderFormula(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"on_macos do\n    depends_on arch: :arm64\n  end",
+		"if OS.mac? && Hardware::CPU.arm?\n    url \"https://github.com/o/tool/releases/download/v#{version}/tool-macos-arm64\"",
+		"if OS.linux? && Hardware::CPU.intel?",
+		"if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("formula is missing %q:\n%s", want, got)
+		}
+	}
+	for _, unwanted := range []string{"OS.mac? && Hardware::CPU.intel?", "tool-macos-x86", "depends_on :macos", "depends_on :linux", "on_linux"} {
+		if strings.Contains(got, unwanted) {
+			t.Errorf("formula has unwanted %q:\n%s", unwanted, got)
+		}
 	}
 }

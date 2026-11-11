@@ -6,63 +6,59 @@
   "additionalProperties": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["desc", "install", "test"],
+    "required": ["source", "desc", "homepage", "install", "test"],
     "properties": {
       "source": {
-        "enum": ["", "go"],
-        "description": "Where releases come from. Omit for GitHub; `go` reads go.dev."
+        "enum": ["github", "go"],
+        "description": "Where releases come from: `github` reads GitHub releases, `go` reads go.dev."
       },
       "repo": {
         "type": "string",
-        "pattern": "^[^/]+/[^/]+$",
-        "description": "GitHub repository (owner/name) whose latest release provides the version and sha256."
-      },
-      "homepage": {
-        "type": "string",
-        "minLength": 1,
-        "description": "Formula homepage. Defaults to the GitHub repository; required for `source: go`."
-      },
-      "release_notes": {
-        "type": "string",
-        "pattern": "#\\{version\\}",
-        "description": "Release notes link for the PR body; `#{version}` is replaced by the version. Defaults to the GitHub release; required for `source: go`."
+        "description": "GitHub repository (owner/name) whose latest release provides the version and sha256.",
+        "pattern": "^[^/]+/[^/]+$"
       },
       "desc": {
         "type": "string",
         "description": "Formula description.",
         "minLength": 1
       },
-      "mac_only": {
-        "type": "boolean",
-        "description": "Emit `depends_on :macos` and skip Linux."
+      "homepage": {
+        "type": "string",
+        "description": "Formula homepage.",
+        "minLength": 1
+      },
+      "release_notes": {
+        "type": "string",
+        "description": "Release notes link for the PR body; `#{version}` is replaced by the version. Defaults to the GitHub release; required for `source: go`.",
+        "pattern": "#\\{version\\}"
       },
       "conflicts": {
         "type": "array",
+        "description": "Formulae to emit as `conflicts_with`.",
         "items": {
           "type": "string"
-        },
-        "description": "Formulae to emit as `conflicts_with`."
+        }
       },
-      "urls": {
+      "platforms": {
         "type": "object",
-        "description": "Per-platform asset URLs for releases that aren't GoReleaser-style. `#{version}` is interpolated by Homebrew. Every platform not skipped by `mac_only` is required.",
+        "description": "Supported platforms, each mapped to its release asset name (`#{version}` is replaced by the version). A platform is supported only if listed. The formula gets `depends_on :macos` or `:linux` when an OS is absent, and an `on_macos`/`on_linux` arch constraint when only one of its arches is listed.",
+        "minProperties": 1,
         "propertyNames": {
           "enum": ["darwin-arm64", "darwin-amd64", "linux-amd64", "linux-arm64"]
         },
         "additionalProperties": {
           "type": "string",
-          "minLength": 1
-        },
-        "required": ["darwin-arm64", "darwin-amd64"]
+          "pattern": "^[^/]+$"
+        }
       },
       "install": {
         "type": "array",
+        "description": "Ruby lines for the `install` block.",
+        "minItems": 1,
         "items": {
           "type": "string",
           "minLength": 1
-        },
-        "minItems": 1,
-        "description": "Ruby lines for the `install` block."
+        }
       },
       "test": {
         "type": "string",
@@ -74,23 +70,6 @@
       {
         "if": {
           "properties": {
-            "mac_only": {
-              "const": true
-            }
-          },
-          "required": ["mac_only"]
-        },
-        "else": {
-          "properties": {
-            "urls": {
-              "required": ["linux-amd64", "linux-arm64"]
-            }
-          }
-        }
-      },
-      {
-        "if": {
-          "properties": {
             "source": {
               "const": "go"
             }
@@ -98,16 +77,15 @@
           "required": ["source"]
         },
         "then": {
-          "required": ["homepage", "release_notes"],
+          "required": ["release_notes"],
           "properties": {
             "repo": false,
-            "urls": false,
-            "mac_only": {"const": false},
+            "platforms": false,
             "conflicts": false
           }
         },
         "else": {
-          "required": ["repo"]
+          "required": ["repo", "platforms"]
         }
       }
     ]

@@ -32,11 +32,14 @@ jobs:
             const fs = require('fs')
 
             // A bare `depends_on :macos` means macOS-only, so it is not tested on Linux.
+            // Likewise `depends_on :linux` is not tested on macOS.
             // Versioned forms (`macos: :ventura`) still install on Linux.
             const include = paths.flatMap((path) => {
               const formula = path.split('/').pop().replace(/\.rb$/, '')
-              const macosOnly = /^\s*depends_on\s+:macos\s*$/m.test(fs.readFileSync(path, 'utf8'))
-              const oses = macosOnly ? ['macos-latest'] : ['macos-latest', 'ubuntu-latest']
+              const text = fs.readFileSync(path, 'utf8')
+              const macosOnly = /^\s*depends_on\s+:macos\s*$/m.test(text)
+              const linuxOnly = /^\s*depends_on\s+:linux\s*$/m.test(text)
+              const oses = macosOnly ? ['macos-latest'] : linuxOnly ? ['ubuntu-latest'] : ['macos-latest', 'ubuntu-latest']
               return oses.map((os) => ({ formula, os }))
             })
 
