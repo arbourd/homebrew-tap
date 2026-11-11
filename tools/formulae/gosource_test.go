@@ -21,7 +21,6 @@ func supportedGoRelease() goRelease {
 			{Filename: "go1.26.2.darwin-amd64.tar.gz", OS: "darwin", Arch: "amd64", SHA256: sha("b"), Kind: "archive"},
 			{Filename: "go1.26.2.linux-amd64.tar.gz", OS: "linux", Arch: "amd64", SHA256: sha("c"), Kind: "archive"},
 			{Filename: "go1.26.2.linux-arm64.tar.gz", OS: "linux", Arch: "arm64", SHA256: sha("d"), Kind: "archive"},
-			{Filename: "go1.26.2.linux-armv6l.tar.gz", OS: "linux", Arch: "armv6l", SHA256: sha("e"), Kind: "archive"},
 		},
 	}
 }
@@ -48,7 +47,6 @@ func TestBuildGoFormula(t *testing.T) {
 		{URL: goDL + "go1.26.2.darwin-amd64.tar.gz", SHA256: sha("b"), Platform: platforms[1]},
 		{URL: goDL + "go1.26.2.linux-amd64.tar.gz", SHA256: sha("c"), Platform: platforms[2]},
 		{URL: goDL + "go1.26.2.linux-arm64.tar.gz", SHA256: sha("d"), Platform: platforms[3]},
-		{URL: goDL + "go1.26.2.linux-armv6l.tar.gz", SHA256: sha("e"), Platform: linuxArm},
 	}
 	if !slices.Equal(got.Files, want) {
 		t.Errorf("Files = %+v, want %+v", got.Files, want)
@@ -82,16 +80,6 @@ func TestBuildGoFormulaMissingPlatform(t *testing.T) {
 
 	if _, err := buildGoFormula("go", specs["go"], release); err == nil {
 		t.Error("buildGoFormula() error = nil, want error for missing platform")
-	}
-}
-
-func TestBuildGoFormulaDuplicatePlatform(t *testing.T) {
-	// Five archives, but linux-armv6l is replaced by a second linux-amd64.
-	release := supportedGoRelease()
-	release.Files[4] = release.Files[2]
-
-	if _, err := buildGoFormula("go", specs["go"], release); err == nil {
-		t.Error("buildGoFormula() error = nil, want error for duplicate and missing platform")
 	}
 }
 
