@@ -56,6 +56,12 @@ func TestRenderFormula(t *testing.T) {
 	}
 }
 
+func TestDefaultReleaseNotes(t *testing.T) {
+	if got, want := specs["git-get"].ReleaseNotes, "https://github.com/arbourd/git-get/releases/tag/v#{version}"; got != want {
+		t.Errorf("git-get ReleaseNotes = %q, want %q", got, want)
+	}
+}
+
 func TestSpecValidate(t *testing.T) {
 	plat := map[string]string{"darwin-arm64": "a", "darwin-amd64": "a"}
 	ok := Spec{Source: "github", Repo: "o/n", Homepage: "h", Platforms: plat, Desc: "d", Install: []string{"i"}, Test: "t"}
@@ -76,6 +82,8 @@ func TestSpecValidate(t *testing.T) {
 		"source":          {Source: "gitlab", Repo: "o/n", Desc: "d", Install: []string{"i"}, Test: "t"},
 		"go with repo":    {Source: "go", Platforms: plat, Repo: "o/n", Homepage: "h", ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"},
 		"release_notes":   {Source: "github", Repo: "o/n", Homepage: "h", Platforms: plat, ReleaseNotes: "https://x/notes", Desc: "d", Install: []string{"i"}, Test: "t"},
+		"go no notes":     {Source: "go", Platforms: plat, Homepage: "h", Desc: "d", Install: []string{"i"}, Test: "t"},
+		"go conflicts":    {Source: "go", Platforms: plat, Homepage: "h", ReleaseNotes: "n#{version}", Conflicts: []string{"x"}, Desc: "d", Install: []string{"i"}, Test: "t"},
 		"go no platforms": {Source: "go", Homepage: "h", ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"},
 		"no homepage":     {Source: "github", Repo: "o/n", Platforms: plat, Desc: "d", Install: []string{"i"}, Test: "t"},
 		"go no homepage":  {Source: "go", Platforms: plat, ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"},
@@ -100,19 +108,20 @@ func TestSpecValidate(t *testing.T) {
 	}
 }
 
-func TestLoadSpecsUnknownKey(t *testing.T) {
-	orig := specsYAML
-	defer func() {
-		specsYAML = orig
-		if recover() == nil {
-			t.Error("loadSpecs() with unknown key did not panic")
-		}
-	}()
-	specsYAML = []byte("x:\n  source: github\n  repo: o/n\n  desc: d\n  homepage: h\n  platforms: {darwin-arm64: a, darwin-amd64: a}\n  install: [i]\n  test: t\n  plaftorms: {}\n")
-	loadSpecs()
+func TestParseSpecsUnknownKey(t *testing.T) {
+	const entry = "x:\n  source: github\n  repo: o/n\n  desc: d\n  homepage: h\n  platforms: {darwin-arm64: a, darwin-amd64: a}\n  install: [i]\n  test: t\n"
+	if _, err := parseSpecs([]byte(entry)); err != nil {
+		t.Fatalf("parseSpecs() valid entry error: %v", err)
+	}
+	_, err := parseSpecs([]byte(entry + "  plaftorms: {}\n"))
+	if err == nil || !strings.Contains(err.Error(), "plaftorms") {
+		t.Errorf("parseSpecs() with unknown key error = %v, want one naming plaftorms", err)
+	}
 }
 
-func TestSchema(t *testing.T) {
+// schemaValidator returns a func validating YAML source against formulae.schema.json.
+func schemaValidator(t *testing.T) func(string) error {
+	t.Helper()
 	b, err := os.ReadFile("formulae.schema.json")
 	if err != nil {
 		t.Fatal(err)
@@ -129,13 +138,73 @@ func TestSchema(t *testing.T) {
 	if err != nil {
 		t.Fatalf("compile schema: %v", err)
 	}
-	validate := func(src string) error {
+	return func(src string) error {
 		var v any
 		if err := yaml.Unmarshal([]byte(src), &v); err != nil {
-			t.Fatal(err)
+			return err
 		}
 		return sch.Validate(v)
 	}
+}
+
+// loaderValidate runs the loadSpecs path on YAML source.
+func loaderValidate(src string) error {
+	_, err := parseSpecs([]byte(src))
+	return err
+}
+
+// The loader must reach the same verdict as the schema, so editors and load-time panics agree.
+func TestSchemaLoaderAgree(t *testing.T) {
+	schema := schemaValidator(t)
+	const plat = "  platforms: {darwin-arm64: a, darwin-amd64: a, linux-amd64: a, linux-arm64: a}\n"
+	const base = "  homepage: h\n  desc: d\n  install: [i]\n  test: t\n"
+	const gh = "  source: github\n  repo: o/n\n" + base
+	const goBase = "  source: go\n  release_notes: n#{version}\n" + base
+	const goPlat = "  platforms: {darwin-arm64: a, darwin-amd64: a}\n"
+
+	cases := map[string]struct {
+		src string
+		ok  bool
+	}{
+		"github":              {"a:\n" + gh + plat, true},
+		"go":                  {"a:\n" + goBase + goPlat, true},
+		"linux only":          {"a:\n" + gh + "  platforms: {linux-amd64: a, linux-arm64: a}\n", true},
+		"single arch":         {"a:\n" + gh + "  platforms: {darwin-arm64: a}\n", true},
+		"hyphen name":         {"a-b1:\n" + gh + plat, true},
+		"empty install line":  {"a:\n" + strings.Replace(gh, "[i]", "['']", 1) + plat, false},
+		"digit name":          {"1a:\n" + gh + plat, false},
+		"upper name":          {"A:\n" + gh + plat, false},
+		"double hyphen name":  {"a--b:\n" + gh + plat, false},
+		"trailing hyphen":     {"a-:\n" + gh + plat, false},
+		"repo no slash":       {"a:\n" + strings.Replace(gh, "o/n", "n", 1) + plat, false},
+		"repo trailing slash": {"a:\n" + strings.Replace(gh, "o/n", "o/n/", 1) + plat, false},
+		"repo leading slash":  {"a:\n" + strings.Replace(gh, "o/n", "/o/n", 1) + plat, false},
+		"repo extra segment":  {"a:\n" + strings.Replace(gh, "o/n", "o/n/x", 1) + plat, false},
+		"asset with slash":    {"a:\n" + gh + "  platforms: {darwin-arm64: x/a}\n", false},
+		"go with conflicts":   {"a:\n" + goBase + goPlat + "  conflicts: [b]\n", false},
+		"go no release_notes": {"a:\n  source: go\n" + base + goPlat, false},
+		"unknown platform":    {"a:\n" + gh + "  platforms: {plan9-amd64: a}\n", false},
+		"unknown key":         {"a:\n" + gh + plat + "  extra: x\n", false},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			if got := schema(c.src) == nil; got != c.ok {
+				t.Errorf("schema accepts = %v, want %v", got, c.ok)
+			}
+			if got := loaderValidate(c.src) == nil; got != c.ok {
+				t.Errorf("loader accepts = %v, want %v", got, c.ok)
+			}
+		})
+	}
+
+}
+
+func TestSchema(t *testing.T) {
+	b, err := os.ReadFile("formulae.schema.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	validate := schemaValidator(t)
 
 	t.Run("formulae.yaml", func(t *testing.T) {
 		if err := validate(string(specsYAML)); err != nil {
@@ -158,6 +227,8 @@ func TestSchema(t *testing.T) {
 			"empty asset":      "a:\n" + base + "  platforms: {darwin-arm64: ''}\n",
 			"asset path":       "a:\n" + base + "  platforms: {darwin-arm64: x/a}\n",
 			"go with repo":     "a:\n  source: go\n  repo: o/n\n  platforms: {darwin-arm64: a, darwin-amd64: a}\n  homepage: h\n  desc: d\n  install: [i]\n  test: t\n  release_notes: n#{version}\n",
+			"go no notes":      "a:\n  source: go\n  platforms: {darwin-arm64: a, darwin-amd64: a}\n  homepage: h\n  desc: d\n  install: [i]\n  test: t\n",
+			"go conflicts":     "a:\n  source: go\n  platforms: {darwin-arm64: a, darwin-amd64: a}\n  homepage: h\n  release_notes: n#{version}\n  conflicts: [x]\n  desc: d\n  install: [i]\n  test: t\n",
 			"no homepage":      "a:\n  source: github\n  repo: o/n\n  desc: d\n  install: [i]\n  test: t\n" + platforms,
 			"go no homepage":   "a:\n  source: go\n  platforms: {darwin-arm64: a, darwin-amd64: a}\n  desc: d\n  install: [i]\n  test: t\n",
 			"notes no version": "a:\n" + base + platforms + "  release_notes: https://x/notes\n",
