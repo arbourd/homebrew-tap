@@ -109,7 +109,7 @@ opengrep:
   source: github
   repo: opengrep/opengrep
 
-  desc: Static code analysis engine to find bugs and vulnerabilities
+  desc: Static code analysis engine to find security issues in code
   homepage: https://github.com/opengrep/opengrep
   platforms:
     darwin-arm64: opengrep_osx_arm64
@@ -162,7 +162,7 @@ awman:
 go:
   source: go
 
-  desc: Open source programming language to build simple/reliable/efficient software
+  desc: Open source programming language that makes it simple to build secure, scalable systems
   homepage: https://go.dev/
   release_notes: https://go.dev/doc/devel/release#go#{version}
   platforms:
