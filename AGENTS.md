@@ -18,13 +18,13 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - Entries are explicit: `source`, `desc`, `homepage` and `platforms` have no defaults. Keep keys in the
   order `source`, `repo`, `desc`, `homepage`, `release_notes`, `conflicts`, `platforms`, `install`, `test`,
   with a blank line after `repo` (or `source`), `platforms`, and `install`.
-- Source: `go` uses `source: go` (reads go.dev, no `repo` or `platforms`, so it sets `release_notes` too); every other
+- Source: `go` uses `source: go` (reads go.dev, no `repo`, so it sets `release_notes` too); every other
   entry uses `source: github`. The generator only supports `vX.Y.Z` (or `vX.Y`) release tags: the asset
   URL hard-codes the `v`.
 - `release_notes` is the PR body link and must contain `#{version}`; it defaults to the GitHub release
   for `source: github`.
-- `platforms` maps each supported platform suffix to its asset name (`#{version}` allowed).
-  Unlisted platforms are unsupported. List them as `darwin-arm64`,
+- `platforms` maps each supported platform suffix to its asset name (`#{version}` allowed); for `go`
+  the values are go.dev filenames. Unlisted platforms are unsupported. List them as `darwin-arm64`,
   `darwin-amd64`, `linux-amd64`, `linux-arm64` (a convention; only the schema enum is checked).
 - Every release asset needs a GitHub `digest`. A listed platform with a missing asset or digest fails the
   build; drop the platform from `platforms` if upstream stops publishing it.

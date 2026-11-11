@@ -143,6 +143,11 @@ go:
   desc: Open source programming language to build simple/reliable/efficient software
   homepage: https://go.dev/
   release_notes: https://go.dev/doc/devel/release#go#{version}
+  platforms:
+    darwin-arm64: go#{version}.darwin-arm64.tar.gz
+    darwin-amd64: go#{version}.darwin-amd64.tar.gz
+    linux-amd64: go#{version}.linux-amd64.tar.gz
+    linux-arm64: go#{version}.linux-arm64.tar.gz
 
   install:
     - libexec.install Dir["*"]

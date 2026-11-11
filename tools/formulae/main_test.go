@@ -67,22 +67,22 @@ func TestSpecValidate(t *testing.T) {
 	if err := okSingle.validate(); err != nil {
 		t.Fatalf("validate() single arch error: %v", err)
 	}
-	okGo := Spec{Source: "go", Homepage: "h", ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"}
+	okGo := Spec{Source: "go", Platforms: plat, Homepage: "h", ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"}
 	if err := okGo.validate(); err != nil {
 		t.Fatalf("validate() error: %v", err)
 	}
 	for name, bad := range map[string]Spec{
-		"no source":      {Repo: "o/n", Homepage: "h", Platforms: plat, Desc: "d", Install: []string{"i"}, Test: "t"},
-		"source":         {Source: "gitlab", Repo: "o/n", Desc: "d", Install: []string{"i"}, Test: "t"},
-		"go with repo":   {Source: "go", Repo: "o/n", Homepage: "h", ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"},
-		"release_notes":  {Source: "github", Repo: "o/n", Homepage: "h", Platforms: plat, ReleaseNotes: "https://x/notes", Desc: "d", Install: []string{"i"}, Test: "t"},
-		"go platforms":   {Source: "go", Platforms: map[string]string{"darwin-arm64": "a"}, Homepage: "h", ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"},
-		"no homepage":    {Source: "github", Repo: "o/n", Platforms: plat, Desc: "d", Install: []string{"i"}, Test: "t"},
-		"go no homepage": {Source: "go", ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"},
-		"no platforms":   {Source: "github", Repo: "o/n", Homepage: "h", Desc: "d", Install: []string{"i"}, Test: "t"},
-		"bad platform":   {Source: "github", Repo: "o/n", Homepage: "h", Platforms: map[string]string{"plan9-amd64": "a"}, Desc: "d", Install: []string{"i"}, Test: "t"},
-		"empty asset":    {Source: "github", Repo: "o/n", Homepage: "h", Platforms: map[string]string{"darwin-arm64": ""}, Desc: "d", Install: []string{"i"}, Test: "t"},
-		"asset path":     {Source: "github", Repo: "o/n", Homepage: "h", Platforms: map[string]string{"darwin-arm64": "x/a"}, Desc: "d", Install: []string{"i"}, Test: "t"},
+		"no source":       {Repo: "o/n", Homepage: "h", Platforms: plat, Desc: "d", Install: []string{"i"}, Test: "t"},
+		"source":          {Source: "gitlab", Repo: "o/n", Desc: "d", Install: []string{"i"}, Test: "t"},
+		"go with repo":    {Source: "go", Platforms: plat, Repo: "o/n", Homepage: "h", ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"},
+		"release_notes":   {Source: "github", Repo: "o/n", Homepage: "h", Platforms: plat, ReleaseNotes: "https://x/notes", Desc: "d", Install: []string{"i"}, Test: "t"},
+		"go no platforms": {Source: "go", Homepage: "h", ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"},
+		"no homepage":     {Source: "github", Repo: "o/n", Platforms: plat, Desc: "d", Install: []string{"i"}, Test: "t"},
+		"go no homepage":  {Source: "go", Platforms: plat, ReleaseNotes: "n#{version}", Desc: "d", Install: []string{"i"}, Test: "t"},
+		"no platforms":    {Source: "github", Repo: "o/n", Homepage: "h", Desc: "d", Install: []string{"i"}, Test: "t"},
+		"bad platform":    {Source: "github", Repo: "o/n", Homepage: "h", Platforms: map[string]string{"plan9-amd64": "a"}, Desc: "d", Install: []string{"i"}, Test: "t"},
+		"empty asset":     {Source: "github", Repo: "o/n", Homepage: "h", Platforms: map[string]string{"darwin-arm64": ""}, Desc: "d", Install: []string{"i"}, Test: "t"},
+		"asset path":      {Source: "github", Repo: "o/n", Homepage: "h", Platforms: map[string]string{"darwin-arm64": "x/a"}, Desc: "d", Install: []string{"i"}, Test: "t"},
 	} {
 		if err := bad.validate(); err == nil {
 			t.Errorf("validate() %s error = nil", name)
@@ -157,11 +157,11 @@ func TestSchema(t *testing.T) {
 			"empty platforms":  "a:\n" + base + "  platforms: {}\n",
 			"empty asset":      "a:\n" + base + "  platforms: {darwin-arm64: ''}\n",
 			"asset path":       "a:\n" + base + "  platforms: {darwin-arm64: x/a}\n",
-			"go with repo":     "a:\n  source: go\n  repo: o/n\n  homepage: h\n  desc: d\n  install: [i]\n  test: t\n  release_notes: n#{version}\n",
+			"go with repo":     "a:\n  source: go\n  repo: o/n\n  platforms: {darwin-arm64: a, darwin-amd64: a}\n  homepage: h\n  desc: d\n  install: [i]\n  test: t\n  release_notes: n#{version}\n",
 			"no homepage":      "a:\n  source: github\n  repo: o/n\n  desc: d\n  install: [i]\n  test: t\n" + platforms,
-			"go no homepage":   "a:\n  source: go\n  desc: d\n  install: [i]\n  test: t\n",
+			"go no homepage":   "a:\n  source: go\n  platforms: {darwin-arm64: a, darwin-amd64: a}\n  desc: d\n  install: [i]\n  test: t\n",
 			"notes no version": "a:\n" + base + platforms + "  release_notes: https://x/notes\n",
-			"go platforms":     "a:\n  source: go\n  platforms: {darwin-arm64: a}\n  homepage: h\n  release_notes: n#{version}\n  desc: d\n  install: [i]\n  test: t\n",
+			"go no platforms":  "a:\n  source: go\n  homepage: h\n  release_notes: n#{version}\n  desc: d\n  install: [i]\n  test: t\n",
 			"no source":        "a:\n  repo: o/n\n  homepage: h\n  desc: d\n  install: [i]\n  test: t\n" + platforms,
 			"empty source":     "a:\n  source: ''\n  repo: o/n\n  homepage: h\n  desc: d\n  install: [i]\n  test: t\n" + platforms,
 			"no repo":          "a:\n  source: github\n  homepage: h\n" + platforms + "  desc: d\n  install: [i]\n  test: t\n",
@@ -172,7 +172,7 @@ func TestSchema(t *testing.T) {
 			}
 		}
 		for name, src := range map[string]string{
-			"go":              "a:\n  source: go\n  homepage: h\n  release_notes: n#{version}\n  desc: d\n  install: [i]\n  test: t\n",
+			"go":              "a:\n  source: go\n  platforms: {darwin-arm64: a, darwin-amd64: a}\n  homepage: h\n  release_notes: n#{version}\n  desc: d\n  install: [i]\n  test: t\n",
 			"all platforms":   "a:\n" + base + platforms,
 			"linux only":      "a:\n" + base + "  platforms: {linux-amd64: a, linux-arm64: a}\n",
 			"no darwin intel": "a:\n" + base + "  platforms: {darwin-arm64: a, linux-amd64: a, linux-arm64: a}\n",

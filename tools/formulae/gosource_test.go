@@ -17,10 +17,10 @@ func supportedGoRelease() goRelease {
 	return goRelease{
 		Version: "go1.26.2",
 		Files: []goFile{
-			{Filename: "go1.26.2.darwin-arm64.tar.gz", OS: "darwin", Arch: "arm64", SHA256: sha("a"), Kind: "archive"},
-			{Filename: "go1.26.2.darwin-amd64.tar.gz", OS: "darwin", Arch: "amd64", SHA256: sha("b"), Kind: "archive"},
-			{Filename: "go1.26.2.linux-amd64.tar.gz", OS: "linux", Arch: "amd64", SHA256: sha("c"), Kind: "archive"},
-			{Filename: "go1.26.2.linux-arm64.tar.gz", OS: "linux", Arch: "arm64", SHA256: sha("d"), Kind: "archive"},
+			{Filename: "go1.26.2.darwin-arm64.tar.gz", SHA256: sha("a"), Kind: "archive"},
+			{Filename: "go1.26.2.darwin-amd64.tar.gz", SHA256: sha("b"), Kind: "archive"},
+			{Filename: "go1.26.2.linux-amd64.tar.gz", SHA256: sha("c"), Kind: "archive"},
+			{Filename: "go1.26.2.linux-arm64.tar.gz", SHA256: sha("d"), Kind: "archive"},
 		},
 	}
 }
@@ -30,7 +30,7 @@ func TestBuildGoFormula(t *testing.T) {
 	release := supportedGoRelease()
 	release.Files = append(release.Files,
 		goFile{Filename: "go1.26.2.src.tar.gz", SHA256: sha("f"), Kind: "source"},
-		goFile{Filename: "go1.26.2.windows-amd64.zip", OS: "windows", Arch: "amd64", SHA256: sha("0"), Kind: "archive"},
+		goFile{Filename: "go1.26.2.windows-amd64.zip", SHA256: sha("0"), Kind: "archive"},
 	)
 
 	got, err := buildGoFormula("go", specs["go"], release)
@@ -59,7 +59,6 @@ func TestBuildGoFormulaInvalid(t *testing.T) {
 		mutate func(*goRelease)
 	}{
 		{"version", func(r *goRelease) { r.Version = "go1.26.2\nexit" }},
-		{"filename", func(r *goRelease) { r.Files[0].Filename = "go1.26.2.darwin-arm64.tar.gz\" evil" }},
 		{"sha256 too short", func(r *goRelease) { r.Files[0].SHA256 = "aaa" }},
 		{"sha256 not hex", func(r *goRelease) { r.Files[0].SHA256 = sha("z") }},
 	}
@@ -83,11 +82,21 @@ func TestBuildGoFormulaMissingPlatform(t *testing.T) {
 	}
 }
 
+func TestBuildGoFormulaNotArchive(t *testing.T) {
+	// A file with the right name but another kind (such as source) is not an archive.
+	release := supportedGoRelease()
+	release.Files[0].Kind = "source"
+
+	if _, err := buildGoFormula("go", specs["go"], release); err == nil {
+		t.Error("buildGoFormula() error = nil, want error for non-archive file")
+	}
+}
+
 func TestFetchReleases(t *testing.T) {
 	old := retryDelay
 	retryDelay = 0
 	t.Cleanup(func() { retryDelay = old })
-	const body = `[{"version":"go1.26.2","files":[{"filename":"go1.26.2.linux-amd64.tar.gz","os":"linux","arch":"amd64","sha256":"ccc","kind":"archive"}]}]`
+	const body = `[{"version":"go1.26.2","files":[{"filename":"go1.26.2.linux-amd64.tar.gz","sha256":"ccc","kind":"archive"}]}]`
 
 	tests := []struct {
 		name         string

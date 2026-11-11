@@ -6,7 +6,7 @@
   "additionalProperties": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["source", "desc", "homepage", "install", "test"],
+    "required": ["source", "desc", "homepage", "platforms", "install", "test"],
     "properties": {
       "source": {
         "enum": ["github", "go"],
@@ -80,12 +80,11 @@
           "required": ["release_notes"],
           "properties": {
             "repo": false,
-            "platforms": false,
             "conflicts": false
           }
         },
         "else": {
-          "required": ["repo", "platforms"]
+          "required": ["repo"]
         }
       }
     ]

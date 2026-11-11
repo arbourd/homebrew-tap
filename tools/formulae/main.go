@@ -27,7 +27,8 @@ import (
 )
 
 // Spec describes a formula. Releases come from GitHub (`source: github`), with each supported
-// platform's asset named in Platforms. Source "go" reads go.dev instead.
+// platform's asset named in Platforms. Source "go" reads go.dev instead, with Platforms naming
+// go.dev files.
 type Spec struct {
 	Source   string `yaml:"source"`
 	Repo     string `yaml:"repo"`
@@ -36,8 +37,8 @@ type Spec struct {
 	// ReleaseNotes is the PR body link; `#{version}` is replaced by the version.
 	ReleaseNotes string   `yaml:"release_notes"`
 	Conflicts    []string `yaml:"conflicts"`
-	// Platforms maps a platform suffix (e.g. darwin-arm64) to its release asset name (with
-	// `#{version}`). A platform is supported if and only if it is listed.
+	// Platforms maps a platform suffix (e.g. darwin-arm64) to its release asset (or go.dev
+	// file) name, with `#{version}`. A platform is supported if and only if it is listed.
 	Platforms map[string]string `yaml:"platforms"`
 	Install   []string          `yaml:"install"`
 	Test      string            `yaml:"test"`
@@ -145,8 +146,8 @@ func (s Spec) validate() error {
 	switch {
 	case s.Source != "github" && s.Source != "go":
 		return fmt.Errorf("source must be github or go, got %q", s.Source)
-	case s.Source == "go" && (s.Repo != "" || s.Platforms != nil || s.Conflicts != nil):
-		return fmt.Errorf("repo, platforms and conflicts do not apply to source go")
+	case s.Source == "go" && (s.Repo != "" || s.Conflicts != nil):
+		return fmt.Errorf("repo and conflicts do not apply to source go")
 	case s.Homepage == "":
 		return fmt.Errorf("homepage is required")
 	case s.Source == "go" && s.ReleaseNotes == "":
@@ -161,9 +162,6 @@ func (s Spec) validate() error {
 		return fmt.Errorf("install is required")
 	case s.Test == "":
 		return fmt.Errorf("test is required")
-	}
-	if s.Source != "github" {
-		return nil
 	}
 	if len(s.Platforms) == 0 {
 		return fmt.Errorf("platforms is required")
