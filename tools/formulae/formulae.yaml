@@ -137,6 +137,28 @@ opengrep:
     assert_match "1 Code Finding",
                  shell_output("#{bin}/opengrep scan --config rule.yml test.py")
 
+awman:
+  source: github
+  repo: prettysmartdev/awman
+
+  desc: Run teams of coding agents through repeatable workflows from your terminal
+  homepage: https://prettysmart.dev/awman
+  platforms:
+    darwin-arm64: awman-macos-arm64
+    linux-amd64: awman-linux-amd64
+    linux-arm64: awman-linux-arm64
+
+  install:
+    - bin.install Dir["awman-*"].first => "awman"
+
+  test: |-
+    # config works without a container runtime, unlike most commands.
+    ENV["AWMAN_CONFIG_HOME"] = testpath/"awman"
+    (testpath/"awman").mkpath
+    system "git", "init"
+    system bin/"awman", "config", "set", "agent", "codex"
+    assert_match "codex", shell_output("#{bin}/awman config get agent")
+
 go:
   source: go
 
