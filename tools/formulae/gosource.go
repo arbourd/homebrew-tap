@@ -11,8 +11,6 @@ const goDL = "https://go.dev/dl/"
 
 type goFile struct {
 	Filename string `json:"filename"`
-	OS       string `json:"os"`
-	Arch     string `json:"arch"`
 	SHA256   string `json:"sha256"`
 	Kind     string `json:"kind"`
 }
@@ -23,10 +21,7 @@ type goRelease struct {
 }
 
 // These values are written into Formula/go.rb and the PR, so reject anything unexpected.
-var (
-	goVersionRe  = regexp.MustCompile(`^go[0-9]+\.[0-9]+(\.[0-9]+)?$`)
-	goFilenameRe = regexp.MustCompile(`^go[0-9][0-9A-Za-z.]*\.[a-z0-9]+-[a-z0-9]+\.tar\.gz$`)
-)
+var goVersionRe = regexp.MustCompile(`^go[0-9]+\.[0-9]+(\.[0-9]+)?$`)
 
 // fetchGoReleases retrieves the release list from url, trying up to maxAttempts times.
 func fetchGoReleases(url string) ([]goRelease, error) {
@@ -40,22 +35,21 @@ func buildGoFormula(name string, spec Spec, r goRelease) (Formula, error) {
 	formula := Formula{Spec: spec, Name: name, Class: class(name), Version: strings.TrimPrefix(r.Version, "go")}
 	var missing []string
 	for _, p := range platforms {
-		os, arch, _ := strings.Cut(p.Suffix, "-")
-		i := slices.IndexFunc(r.Files, func(f goFile) bool {
-			return f.Kind == "archive" && f.OS == os && f.Arch == arch
-		})
+		asset, ok := spec.Platforms[p.Suffix]
+		if !ok {
+			continue
+		}
+		filename := strings.ReplaceAll(asset, "#{version}", formula.Version)
+		i := slices.IndexFunc(r.Files, func(f goFile) bool { return f.Kind == "archive" && f.Filename == filename })
 		if i < 0 {
-			missing = append(missing, os+"/"+arch)
+			missing = append(missing, filename)
 			continue
 		}
 		f := r.Files[i]
-		if !goFilenameRe.MatchString(f.Filename) {
-			return Formula{}, fmt.Errorf("invalid filename %q", f.Filename)
-		}
 		if !sha256Re.MatchString(f.SHA256) {
 			return Formula{}, fmt.Errorf("invalid sha256 %q for %s", f.SHA256, f.Filename)
 		}
-		formula.Files = append(formula.Files, File{SHA256: f.SHA256, Platform: p, URL: goDL + f.Filename})
+		formula.Files = append(formula.Files, File{SHA256: f.SHA256, Platform: p, URL: goDL + filename})
 	}
 	if len(missing) > 0 {
 		return Formula{}, fmt.Errorf("%s has no archive for: %s", r.Version, strings.Join(missing, ", "))
