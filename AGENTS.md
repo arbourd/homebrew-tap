@@ -40,7 +40,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 1. Add a `formulae.yaml` entry keyed by formula name, following the registry rules. Required:
    `source: github`, `repo`, `desc`, `homepage`, `platforms`, `install`, `test`; optional: `conflicts`,
    `release_notes`. Copy the closest existing entry (`git-get` for GoReleaser-style assets, `trash` for a
-   macOS-only binary, `opengrep` for custom asset names).
+   macOS-only binary, `opengrep` for custom asset names, `awman` for a partial platform set with
+   bare binary assets).
 2. `go run ./tools/formulae <name> > /tmp/<name>.rb`; if it exits 0 and looks right, move it to
    `Formula/<name>.rb` and commit it. (Redirecting straight into `Formula/` leaves an empty file on
    failure.) The scheduled workflow only opens bump PRs; it never creates the first file. Until the
@@ -90,5 +91,6 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   (confirm exit 0 and a non-empty file), then `brew test arbourd/tap/<name>` (must be installed), then
   `git checkout` the file in the clone.
 - Brew tests set `XDG_CONFIG_HOME` to a nonexistent `testpath/.config`; tools that need it must `mkpath` it in `test`.
+  Tools with their own config dir env var (e.g. `AWMAN_CONFIG_HOME`) should point it at `testpath` too.
 - Brew tests are sandboxed to `testpath`: writes elsewhere (e.g. the real Trash) fail. Prefer offline
   tests (local git repos over cloning from GitHub).
