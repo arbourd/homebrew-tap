@@ -10,11 +10,11 @@ package main
 
 import (
 	"bytes"
-	"cmp"
 	_ "embed"
 	"encoding/json"
 	"fmt"
 	"log"
+	"maps"
 	"net/http"
 	"os"
 	"regexp"
@@ -26,25 +26,24 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Spec describes a formula. Releases come from GitHub (the default source) and follow GoReleaser's
-// `<name>-v<ver>-<os>-<arch>.tar.gz` layout unless URLs overrides them. Source "go" reads go.dev instead.
+// Spec describes a formula. Releases come from GitHub (`source: github`), with each supported
+// platform's asset named in Platforms. Source "go" reads go.dev instead.
 type Spec struct {
 	Source   string `yaml:"source"`
 	Repo     string `yaml:"repo"`
+	Desc     string `yaml:"desc"`
 	Homepage string `yaml:"homepage"`
 	// ReleaseNotes is the PR body link; `#{version}` is replaced by the version.
 	ReleaseNotes string   `yaml:"release_notes"`
-	Desc         string   `yaml:"desc"`
-	MacOnly      bool     `yaml:"mac_only"`
 	Conflicts    []string `yaml:"conflicts"`
-	Install      []string `yaml:"install"`
-	Test         string   `yaml:"test"`
-	// URLs maps a platform suffix (e.g. darwin-arm64) to its download URL, written as it appears
-	// in the formula (with `#{version}`). Every non-skipped platform must be listed.
-	URLs map[string]string `yaml:"urls"`
+	// Platforms maps a platform suffix (e.g. darwin-arm64) to its release asset name (with
+	// `#{version}`). A platform is supported if and only if it is listed.
+	Platforms map[string]string `yaml:"platforms"`
+	Install   []string          `yaml:"install"`
+	Test      string            `yaml:"test"`
 }
 
-// Platform is one release target. Suffix is the asset name's `<os>-<arch>` part.
+// Platform is one release target. Suffix is the `<os>-<arch>` key used in `platforms`.
 type Platform struct {
 	Suffix    string
 	Condition string // Homebrew condition that selects the platform
@@ -71,6 +70,40 @@ type Formula struct {
 	Class   string
 	Version string
 	Files   []File
+}
+
+// MacOnly reports whether the formula has no Linux file.
+func (f Formula) MacOnly() bool {
+	return !slices.ContainsFunc(f.Files, func(file File) bool { return !file.Platform.Mac })
+}
+
+// archOnly returns the Homebrew arch (arm64 or intel) when the formula has exactly one file for
+// the OS, and "" otherwise.
+func (f Formula) archOnly(mac bool) string {
+	var only []File
+	for _, file := range f.Files {
+		if file.Platform.Mac == mac {
+			only = append(only, file)
+		}
+	}
+	if len(only) != 1 {
+		return ""
+	}
+	if strings.HasSuffix(only[0].Platform.Suffix, "arm64") {
+		return "arm64"
+	}
+	return "intel"
+}
+
+// MacArch is the only macOS arch the formula supports, or "" if it supports both or neither.
+func (f Formula) MacArch() string { return f.archOnly(true) }
+
+// LinuxArch is the only Linux arch the formula supports, or "" if it supports both or neither.
+func (f Formula) LinuxArch() string { return f.archOnly(false) }
+
+// LinuxOnly reports whether the formula has no macOS file.
+func (f Formula) LinuxOnly() bool {
+	return !slices.ContainsFunc(f.Files, func(file File) bool { return file.Platform.Mac })
 }
 
 const (
@@ -100,10 +133,8 @@ func loadSpecs() map[string]Spec {
 		if err := spec.validate(); err != nil {
 			panic(fmt.Sprintf("formulae.yaml: %s: %v", name, err))
 		}
-		if spec.Source == "" {
-			repoURL := "https://github.com/" + spec.Repo
-			spec.Homepage = cmp.Or(spec.Homepage, repoURL)
-			spec.ReleaseNotes = cmp.Or(spec.ReleaseNotes, repoURL+"/releases/tag/v#{version}")
+		if spec.ReleaseNotes == "" {
+			spec.ReleaseNotes = "https://github.com/" + spec.Repo + "/releases/tag/v#{version}"
 			m[name] = spec
 		}
 	}
@@ -112,15 +143,17 @@ func loadSpecs() map[string]Spec {
 
 func (s Spec) validate() error {
 	switch {
-	case s.Source != "" && s.Source != "go":
-		return fmt.Errorf("unknown source %q", s.Source)
-	case s.Source == "go" && (s.Repo != "" || s.URLs != nil || s.MacOnly || s.Conflicts != nil):
-		return fmt.Errorf("repo, urls, mac_only and conflicts do not apply to source go")
-	case s.Source == "go" && (s.Homepage == "" || s.ReleaseNotes == ""):
-		return fmt.Errorf("homepage and release_notes are required for source go")
+	case s.Source != "github" && s.Source != "go":
+		return fmt.Errorf("source must be github or go, got %q", s.Source)
+	case s.Source == "go" && (s.Repo != "" || s.Platforms != nil || s.Conflicts != nil):
+		return fmt.Errorf("repo, platforms and conflicts do not apply to source go")
+	case s.Homepage == "":
+		return fmt.Errorf("homepage is required")
+	case s.Source == "go" && s.ReleaseNotes == "":
+		return fmt.Errorf("release_notes is required for source go")
 	case s.ReleaseNotes != "" && !strings.Contains(s.ReleaseNotes, "#{version}"):
 		return fmt.Errorf("release_notes must contain #{version}")
-	case s.Source == "" && (strings.Count(s.Repo, "/") != 1 || strings.HasPrefix(s.Repo, "/") || strings.HasSuffix(s.Repo, "/")):
+	case s.Source == "github" && (strings.Count(s.Repo, "/") != 1 || strings.HasPrefix(s.Repo, "/") || strings.HasSuffix(s.Repo, "/")):
 		return fmt.Errorf("repo %q must be owner/name", s.Repo)
 	case s.Desc == "":
 		return fmt.Errorf("desc is required")
@@ -129,9 +162,18 @@ func (s Spec) validate() error {
 	case s.Test == "":
 		return fmt.Errorf("test is required")
 	}
-	for _, p := range platforms {
-		if s.URLs != nil && (!s.MacOnly || p.Mac) && s.URLs[p.Suffix] == "" {
-			return fmt.Errorf("urls is missing %s", p.Suffix)
+	if s.Source != "github" {
+		return nil
+	}
+	if len(s.Platforms) == 0 {
+		return fmt.Errorf("platforms is required")
+	}
+	for _, suffix := range slices.Sorted(maps.Keys(s.Platforms)) {
+		if !slices.ContainsFunc(platforms, func(p Platform) bool { return p.Suffix == suffix }) {
+			return fmt.Errorf("unknown platform %q", suffix)
+		}
+		if asset := s.Platforms[suffix]; asset == "" || strings.Contains(asset, "/") {
+			return fmt.Errorf("platforms %s: asset %q must be a non-empty file name", suffix, asset)
 		}
 	}
 	return nil
@@ -283,6 +325,18 @@ class {{ .Class }} < Formula
   version "{{ .Version }}"
 {{- if .MacOnly }}
   depends_on :macos
+{{- else if .LinuxOnly }}
+  depends_on :linux
+{{- end }}
+{{- with .MacArch }}
+  on_macos do
+    depends_on arch: :{{ . }}
+  end
+{{- end }}
+{{- with .LinuxArch }}
+  on_linux do
+    depends_on arch: :{{ . }}
+  end
 {{- end }}
 {{ range .Files }}
   if {{ .Platform.Condition }}
