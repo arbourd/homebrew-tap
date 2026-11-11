@@ -162,7 +162,7 @@ awman:
 go:
   source: go
 
-  desc: Open source programming language that makes it simple to build secure, scalable systems
+  desc: Open source language that makes it simple to build secure, scalable systems
   homepage: https://go.dev/
   release_notes: https://go.dev/doc/devel/release#go#{version}
   platforms:
