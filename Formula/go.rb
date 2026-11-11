@@ -24,11 +24,6 @@ class Go < Formula
     sha256 "3392582988a273a87ab5043ee1b2c9c17a2c3c00580bf9326c47a2e0aaaeac92"
   end
 
-  if OS.linux? && Hardware::CPU.arm? && !Hardware::CPU.is_64_bit?
-    url "https://go.dev/dl/go1.27.4.linux-armv6l.tar.gz"
-    sha256 "e50964c41c6e187375387939e2f380de7250eba44e2259dfeb75c540d9d585c3"
-  end
-
   def install
     libexec.install Dir["*"]
     bin.install_symlink Dir[libexec/"bin/go*"]

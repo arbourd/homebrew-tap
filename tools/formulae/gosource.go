@@ -22,9 +22,6 @@ type goRelease struct {
 	Files   []goFile `json:"files"`
 }
 
-// Only Go ships a 32-bit ARM Linux build.
-var linuxArm = Platform{"linux-arm", "OS.linux? && Hardware::CPU.arm? && !Hardware::CPU.is_64_bit?", false}
-
 // These values are written into Formula/go.rb and the PR, so reject anything unexpected.
 var (
 	goVersionRe  = regexp.MustCompile(`^go[0-9]+\.[0-9]+(\.[0-9]+)?$`)
@@ -42,11 +39,8 @@ func buildGoFormula(name string, spec Spec, r goRelease) (Formula, error) {
 	}
 	formula := Formula{Spec: spec, Name: name, Class: class(name), Version: strings.TrimPrefix(r.Version, "go")}
 	var missing []string
-	for _, p := range append(slices.Clone(platforms), linuxArm) {
+	for _, p := range platforms {
 		os, arch, _ := strings.Cut(p.Suffix, "-")
-		if p == linuxArm {
-			arch = "armv6l"
-		}
 		i := slices.IndexFunc(r.Files, func(f goFile) bool {
 			return f.Kind == "archive" && f.OS == os && f.Arch == arch
 		})
