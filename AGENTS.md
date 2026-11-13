@@ -79,6 +79,7 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - Renovate (`.github/renovate.json`) pins actions to SHAs with a semver comment and also bumps `go.mod`.
   Minor and patch action bumps wait 7 days; those for `actions/*` then automerge, and everything else is manual.
 - Run `actionlint` after changing anything under `.github/workflows/`.
+- Validate `.github/renovate.json` after changing it: `npx --yes --package renovate -- renovate-config-validator --strict`.
 
 ## Checks
 
