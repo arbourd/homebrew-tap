@@ -76,7 +76,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   and a bare name makes `bump-cask-pr` target that one.
 - `cask.yml` needs at least one cask in `Casks/` (an empty matrix errors). If the last cask is
   removed, disable both jobs with `if: false`.
-- Pin third-party actions to release tags, not SHAs. Renovate bumps them (`.github/renovate.json`).
+- Renovate pins actions to SHAs with a semver comment (`.github/renovate.json`). Minor and patch bumps of `actions/*` automerge after 7 days; everything else is manual.
+- Run `actionlint` after changing anything under `.github/workflows/`.
 
 ## Checks
 
