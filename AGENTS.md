@@ -57,23 +57,27 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
    `strategy :github_latest` and a `regex(...)` (so livecheck matches `version`), `url :url`, `depends_on macos:`,
    `zap trash:`. Take the initial `version` and each arch's `sha256` from the asset digests (drop the
    `sha256:` prefix): `gh api repos/<owner>/<repo>/releases/latest --jq '.assets[] | [.name, .digest]'`.
-   `brew bump` only updates them afterward.
-2. Add the cask to the `brew bump` step in `cask-bump.yml` (names are hardcoded; e.g.
-   `... arbourd/tap/orca arbourd/tap/<name>`). Keep its flags. The approval step already matches any
-   `bump-*` branch.
-3. `cask.yml` picks the file up by glob. Run its steps locally (see Checks for Brew setup):
+   `cask-bump.yml` only updates them afterward.
+2. `cask.yml` and `cask-bump.yml` pick the file up by glob; no workflow edits.
+3. Run `cask.yml`'s steps locally (see Checks for Brew setup):
    `brew style --cask`, `brew audit --cask --strict --online --except livecheck_version`,
    `brew livecheck --cask`, `brew install --cask`, `brew uninstall --cask --zap` (all with
    `arbourd/tap/<name>`). `cask.yml` also checks that each `app` artifact lands in `/Applications`.
 
 ## Workflows
 
-- The update workflows skip PR creation on `pull_request` events, so editing one only dry-runs it.
+- `formulae-update.yml` skips PR creation on `pull_request` events, so editing it only dry-runs it.
+  `cask-bump.yml` has no `pull_request` trigger; test edits with `workflow_dispatch` on a branch.
+  The PR it opens is based on that branch, so its diff includes your edits.
 - Bot PRs are opened with `GITHUB_TOKEN`, so `formula.yml` / `cask.yml` runs on them sit in
-  `action_required`. Each bump workflow's last step approves them by matching the PR branch name
-  (`<name>-<digit>`, `bump-`); keep that in sync with each `branch:` in the workflows.
-- Keep `--full-name` on `brew bump --cask` in `cask-bump.yml`: homebrew/cask has an unrelated `orca`,
-  and a bare name makes `bump-cask-pr` target that one.
+  `action_required`. Each bump leg's last step approves them by matching the PR branch name
+  (`<name>-<digit>`, `bump-<name>-<digit>`); keep that in sync with each `branch:` in the workflows.
+- `cask-bump.yml` uses brew only to check (`livecheck`) and write (`bump-cask-pr --write-only`); it does
+  no git. `create-pull-request` pushes, so reruns reuse the branch and PR (brew's own push can't recover
+  from an orphan branch). Keep `arbourd/tap/<cask>` fully qualified: homebrew/cask has an unrelated `orca`.
+- `setup-homebrew` already links the checkout as the `arbourd/tap` tap. Don't add an `ln -s` step in a
+  workflow that opens PRs: it nests a `homebrew-tap` symlink in the checkout and `create-pull-request`
+  commits it. Write scratch files to `$RUNNER_TEMP`, not the checkout, for the same reason.
 - `cask.yml` needs at least one cask in `Casks/` (an empty matrix errors). If the last cask is
   removed, disable both jobs with `if: false`.
 - Renovate (`.github/renovate.json`) pins actions to SHAs with a semver comment and also bumps `go.mod`.
