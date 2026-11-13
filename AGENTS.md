@@ -76,7 +76,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   and a bare name makes `bump-cask-pr` target that one.
 - `cask.yml` needs at least one cask in `Casks/` (an empty matrix errors). If the last cask is
   removed, disable both jobs with `if: false`.
-- Renovate pins actions to SHAs with a semver comment (`.github/renovate.json`). Minor and patch bumps of `actions/*` automerge after 7 days; everything else is manual.
+- Renovate (`.github/renovate.json`) pins actions to SHAs with a semver comment and also bumps `go.mod`.
+  Minor and patch action bumps wait 7 days; those for `actions/*` then automerge, and everything else is manual.
 - Run `actionlint` after changing anything under `.github/workflows/`.
 
 ## Checks
