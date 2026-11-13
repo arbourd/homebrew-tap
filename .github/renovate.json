@@ -15,6 +15,12 @@
       "automerge": true
     },
     {
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["Homebrew/actions"],
+      "extractVersion": "^(?<version>\\d+\\.\\d+\\.\\d+\\.\\d+)$",
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(\\.(?<build>\\d+))?$"
+    },
+    {
       "matchManagers": ["gomod"],
       "matchDepNames": ["go"],
       "matchDepTypes": ["golang"],
