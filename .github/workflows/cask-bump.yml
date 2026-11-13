@@ -9,12 +9,38 @@ permissions:
   contents: read
 
 jobs:
+  list:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      casks: ${{ steps.casks.outputs.result }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/github-script@v9
+        id: casks
+        with:
+          script: |
+            const globber = await glob.create('Casks/*.rb')
+            const paths = await globber.glob()
+
+            const casks = paths.map((path) => path.split('/').pop().replace(/\.rb$/, ''))
+
+            console.log(casks)
+            return casks
+
   bump:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
+    needs: [list]
     permissions:
       actions: write
       contents: write
       pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        cask: ${{ fromJson(needs.list.outputs.casks) }}
 
     env:
       HOMEBREW_GITHUB_ACTIONS: 1
@@ -29,19 +55,40 @@ jobs:
       - uses: Homebrew/actions/setup-homebrew@2026.11.09.1
       - uses: Homebrew/actions/git-user-config@2026.11.09.1
 
-      - name: Tap repository
+      - name: brew livecheck ${{ matrix.cask }}
         run: |
-          mkdir -p "$(brew --repository)/Library/Taps/arbourd"
-          ln -s "$PWD" "$(brew --repository)/Library/Taps/arbourd/homebrew-tap"
+          brew livecheck --cask --json arbourd/tap/${{ matrix.cask }} > "$RUNNER_TEMP/livecheck.json"
+          jq . "$RUNNER_TEMP/livecheck.json"
 
-      - name: brew bump
-        run: brew bump --cask --full-name --no-fork --open-pr arbourd/tap/orca
+      - name: Check ${{ matrix.cask }} version
+        id: cask
+        run: |
+          version=$(jq -r '.[0].version | select(.outdated) | .latest' "$RUNNER_TEMP/livecheck.json")
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      # Writes the file only; create-pull-request does the push, so reruns reuse the branch and PR.
+      - name: brew bump-cask-pr ${{ matrix.cask }}
+        if: steps.cask.outputs.version != ''
+        run: brew bump-cask-pr --write-only --no-audit --version "${{ steps.cask.outputs.version }}" arbourd/tap/${{ matrix.cask }}
+
+      - name: Create Pull Request
+        id: pr
+        if: steps.cask.outputs.version != ''
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: bump-${{ matrix.cask }}-${{ steps.cask.outputs.version }}
+          commit-message: ${{ matrix.cask }} ${{ steps.cask.outputs.version }}
+          title: ${{ matrix.cask }} ${{ steps.cask.outputs.version }}
+          reviewers: arbourd
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: approve cask checks
+        if: steps.pr.outputs.pull-request-number != ''
         uses: actions/github-script@v9
         with:
           script: |
             const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+            const branch = /^bump-${{ matrix.cask }}-\d/
             const awaiting = async () => {
               const { data } = await github.rest.actions.listWorkflowRuns({
                 ...context.repo,
@@ -49,12 +96,12 @@ jobs:
                 event: 'pull_request',
                 status: 'action_required',
               })
-              // Only bump PRs opened by the bot from this repo, never forks or hand-made branches.
+              // Only this cask's PRs opened by the bot from this repo, never forks or hand-made branches.
               return data.workflow_runs.filter(
                 (run) =>
                   run.actor.login === 'github-actions[bot]' &&
                   run.head_repository?.full_name === `${context.repo.owner}/${context.repo.repo}` &&
-                  run.head_branch.startsWith('bump-'),
+                  branch.test(run.head_branch),
               )
             }
 
