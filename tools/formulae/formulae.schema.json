@@ -17,6 +17,11 @@
         "description": "GitHub repository (owner/name) whose latest release provides the version and sha256.",
         "pattern": "^[^/]+/[^/]+$"
       },
+      "tag_prefix": {
+        "type": "string",
+        "description": "Text before the version in release tags. Defaults to `v`; use \"\" for bare version tags.",
+        "pattern": "^[A-Za-z0-9._-]*$"
+      },
       "desc": {
         "type": "string",
         "description": "Formula description.",

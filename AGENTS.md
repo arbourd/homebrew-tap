@@ -15,12 +15,13 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - Formulae are generated, never hand-edited. Change the registry (`tools/formulae/formulae.yaml`,
   including each `repo` and `platforms`) or the template in `tools/formulae/main.go`, then regenerate with
   `go run ./tools/formulae <name>`. Update `formulae.schema.json` with any `Spec` field change.
-- Entries are explicit: `source`, `desc`, `homepage` and `platforms` have no defaults. Keep keys in the
-  order `source`, `repo`, `desc`, `homepage`, `release_notes`, `conflicts`, `platforms`, `install`, `test`,
-  with a blank line after `repo` (or `source`), `platforms`, and `install`.
+- Entries are explicit: `source`, `desc`, `homepage` and `platforms` have no defaults (only `tag_prefix`
+  and `release_notes` do). Keep keys in the order `source`, `repo`, `tag_prefix`, `desc`, `homepage`,
+  `release_notes`, `conflicts`, `platforms`, `install`, `test`, with a blank line after `repo` (or
+  `source`), `platforms`, and `install`.
 - Source: `go` uses `source: go` (reads go.dev, no `repo`, so it sets `release_notes` too); every other
-  entry uses `source: github`. The generator only supports `vX.Y.Z` (or `vX.Y`) release tags: the asset
-  URL hard-codes the `v`.
+  entry uses `source: github`. Release tags must be `<tag_prefix>X.Y.Z` (or `X.Y`); `tag_prefix` defaults to
+  `v`, set it to `""` for bare tags (not for `go`).
 - `release_notes` is the PR body link and must contain `#{version}`; it defaults to the GitHub release
   for `source: github`.
 - `platforms` maps each supported platform suffix to its asset name (`#{version}` allowed); for `go`
@@ -38,10 +39,10 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 ## Adding a formula (GitHub project)
 
 1. Add a `formulae.yaml` entry keyed by formula name, following the registry rules. Required:
-   `source: github`, `repo`, `desc`, `homepage`, `platforms`, `install`, `test`; optional: `conflicts`,
-   `release_notes`. Copy the closest existing entry (`git-get` for GoReleaser-style assets, `trash` for a
-   macOS-only binary, `opengrep` for custom asset names, `awman` for a partial platform set with
-   bare binary assets).
+   `source: github`, `repo`, `desc`, `homepage`, `platforms`, `install`, `test`; optional: `tag_prefix`,
+   `conflicts`, `release_notes`. Copy the closest existing entry (`git-get` for GoReleaser-style assets,
+   `trash` for a macOS-only binary, `opengrep` for custom asset names, `awman` for a partial platform set
+   with bare binary assets).
 2. `go run ./tools/formulae <name> > /tmp/<name>.rb`; if it exits 0 and looks right, move it to
    `Formula/<name>.rb` and commit it. (Redirecting straight into `Formula/` leaves an empty file on
    failure.) The scheduled workflow only opens bump PRs; it never creates the first file. Until the
