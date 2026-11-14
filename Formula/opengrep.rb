@@ -2,26 +2,26 @@
 class Opengrep < Formula
   desc "Static code analysis engine to find security issues in code"
   homepage "https://github.com/opengrep/opengrep"
-  version "1.33.1"
+  version "2.0.0"
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_osx_arm64"
-    sha256 "a17c1881bb40e3214266a7a291cf4f2ae3bc56c1715628b5712d2ec816bc3e2d"
+    sha256 "b51b3d83f165a2e0934497b8f1b08abb1c3041ef20ef911c97e04cb39af1ad55"
   end
 
   if OS.mac? && Hardware::CPU.intel?
     url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_osx_x86"
-    sha256 "c3bd18e0d898d44e28419d95dad57c8928bb46ab32889a0ee1f72a87ad9627af"
+    sha256 "51d2f918d7aad0afc1426bb4fbf56e32fc70c3ffd5ddb78e32e7d61e51c029a2"
   end
 
   if OS.linux? && Hardware::CPU.intel?
-    url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_manylinux_x86"
-    sha256 "46e8133cc490f9f50518061590ce2f6be5a08afaeda034471c0ceda4b3899808"
+    url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_linux_x86"
+    sha256 "37e93f4da5fd04a18c5c1febbdd12f7e98dfccd4d0c9cf2593bcb25eeb462da0"
   end
 
   if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-    url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_manylinux_aarch64"
-    sha256 "d1433f63a90b8bc0b6ad4b498a13b372b856ce9a754a43484ba4920fe2d76dcf"
+    url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_linux_aarch64"
+    sha256 "6257b65423a744b704af2ff9beeb8f222c2f6925236af386b56b031d4c06d6d8"
   end
 
   def install
