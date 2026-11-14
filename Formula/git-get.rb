@@ -2,26 +2,26 @@
 class GitGet < Formula
   desc "Go gets your code"
   homepage "https://github.com/arbourd/git-get"
-  version "1.1.0"
+  version "1.2.0"
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/arbourd/git-get/releases/download/v#{version}/git-get-v#{version}-darwin-arm64.tar.gz"
-    sha256 "507a9736c3b9ebe289a5e2a65798a4d5f89068454d5a70768602eef4309f24e3"
+    sha256 "83cedf1095f285ca87dee76e6466677c41990f577354b3ef81acf3f4da0eb460"
   end
 
   if OS.mac? && Hardware::CPU.intel?
     url "https://github.com/arbourd/git-get/releases/download/v#{version}/git-get-v#{version}-darwin-amd64.tar.gz"
-    sha256 "04a37cc5eaf85339eb38a711874d02a3b6c1558f430dc0f01921a331edf11d58"
+    sha256 "9d11a2de2e367e4348d18ae8dcbea6574441f92e62631dce47c53cb0b1b23b25"
   end
 
   if OS.linux? && Hardware::CPU.intel?
     url "https://github.com/arbourd/git-get/releases/download/v#{version}/git-get-v#{version}-linux-amd64.tar.gz"
-    sha256 "987a9303faaf38fc95964fc4f5ca33d0af840adbfcca0cc5a0b4234ee8397a28"
+    sha256 "cf2336fb1bb64b91334561593ede6293e356b5a1582be0b1be9e9ed8f6baaa0c"
   end
 
   if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
     url "https://github.com/arbourd/git-get/releases/download/v#{version}/git-get-v#{version}-linux-arm64.tar.gz"
-    sha256 "b383c0210e38f69e1a827eed8a370b788a07d502cd28799f214bb19825bd60df"
+    sha256 "1a0d4ab139c95f96b8cce1c504f920c22fcea448f95989ae51124604ac7b2679"
   end
 
   conflicts_with "git-extras"
