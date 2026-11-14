@@ -9,6 +9,9 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   `githubsource.go` / `gosource.go` the release sources, `testdata/*.rb.golden` the expected output.
 - `.github/workflows/`: `formulae-update.yml` and `cask-bump.yml` open bump PRs; `formula.yml` and
   `cask.yml` test them; `go-build.yml` tests the generator.
+- On PRs, `formula.yml` and `cask.yml` test only the changed `Formula/*.rb` / `Casks/*.rb`. Pushes to main and
+  manual runs test everything, as do PRs that change the workflow itself (for `formula.yml`, also `go.*` or
+  `tools/formulae/**`).
 
 ## Formulae registry
 
@@ -30,9 +33,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - Every release asset needs a GitHub `digest`. A listed platform with a missing asset or digest fails the
   build; drop the platform from `platforms` if upstream stops publishing it.
 - The formula's constraints follow from the platform set:
-  - no Linux platform: `depends_on :macos`; no macOS platform: `depends_on :linux`. `formula.yml` then
-    tests only the other OS, but only for these bare lines; a versioned form (`macos: :ventura`) is still
-    tested on Linux.
+  - no Linux platform: `depends_on :macos`; no macOS platform: `depends_on :linux`. `formula.yml` runs
+    `go run ./tools/formulae --matrix`, which tests each formula only on the OSes in its `platforms`.
   - one arch of an OS (e.g. no `darwin-amd64`): `on_macos do depends_on arch: :arm64 end` (`on_linux`,
     `:intel` likewise)
 
@@ -79,8 +81,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - `setup-homebrew` already links the checkout as the `arbourd/tap` tap. Don't add an `ln -s` step in a
   workflow that opens PRs: it nests a `homebrew-tap` symlink in the checkout and `create-pull-request`
   commits it. Write scratch files to `$RUNNER_TEMP`, not the checkout, for the same reason.
-- `cask.yml` needs at least one cask in `Casks/` (an empty matrix errors). If the last cask is
-  removed, disable both jobs with `if: false`.
+- `cask.yml` needs at least one cask in `Casks/` (its list step runs `ls Casks/*.rb`, which fails when
+  none exist). If the last cask is removed, disable both jobs with `if: false`.
 - Renovate (`.github/renovate.json`) pins actions to SHAs with a semver comment and also bumps `go.mod`.
   Minor and patch action bumps wait 7 days; those for `actions/*` then automerge, and everything else is manual.
 - Run `actionlint` after changing anything under `.github/workflows/`.

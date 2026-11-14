@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,23 +19,28 @@ jobs:
     permissions:
       contents: read
     outputs:
-      casks: ${{ steps.casks.outputs.result }}
+      casks: ${{ steps.casks.outputs.casks }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        id: casks
         with:
-          script: |
-            const globber = await glob.create('Casks/*.rb')
-            const paths = await globber.glob()
+          fetch-depth: 0
 
-            const casks = paths.map((path) => path.split('/').pop().replace(/\.rb$/, ''))
-
-            console.log(casks)
-            return casks
+      - id: casks
+        shell: bash
+        # On PRs, test only changed files unless the workflow changed.
+        run: |
+          files=$(ls Casks/*.rb)
+          if [ "$GITHUB_EVENT_NAME" = pull_request ] && ! git diff --name-only "$BASE" HEAD | grep -qxF .github/workflows/cask.yml; then
+            files=$(git diff --name-only --diff-filter=d "$BASE" HEAD -- 'Casks/*.rb')
+          fi
+          casks=$(echo "$files" | jq -Rnc '[inputs | select(. != "") | sub(".*/"; "") | sub("\\.rb$"; "")]')
+          echo "casks=$casks" >> "$GITHUB_OUTPUT"
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
 
   test:
+    if: needs.list.outputs.casks != '[]'
     runs-on: macos-latest
     permissions:
       contents: read

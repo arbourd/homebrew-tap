@@ -92,9 +92,11 @@ func TestSpecValidate(t *testing.T) {
 		"empty asset":     {Source: "github", Repo: "o/n", Homepage: "h", Platforms: map[string]string{"darwin-arm64": ""}, Desc: "d", Install: []string{"i"}, Test: "t"},
 		"asset path":      {Source: "github", Repo: "o/n", Homepage: "h", Platforms: map[string]string{"darwin-arm64": "x/a"}, Desc: "d", Install: []string{"i"}, Test: "t"},
 	} {
-		if err := bad.validate(); err == nil {
-			t.Errorf("validate() %s error = nil", name)
-		}
+		t.Run(name, func(t *testing.T) {
+			if err := bad.validate(); err == nil {
+				t.Error("validate() error = nil")
+			}
+		})
 	}
 	for field, bad := range map[string]Spec{
 		"repo":    {Source: "github", Repo: "n", Homepage: "h", Platforms: plat, Desc: "d", Install: []string{"i"}, Test: "t"},
@@ -102,9 +104,11 @@ func TestSpecValidate(t *testing.T) {
 		"install": {Source: "github", Repo: "o/n", Homepage: "h", Platforms: plat, Desc: "d", Test: "t"},
 		"test":    {Source: "github", Repo: "o/n", Homepage: "h", Platforms: plat, Desc: "d", Install: []string{"i"}},
 	} {
-		if err := bad.validate(); err == nil || !strings.Contains(err.Error(), field) {
-			t.Errorf("validate() without %s error = %v", field, err)
-		}
+		t.Run("no "+field, func(t *testing.T) {
+			if err := bad.validate(); err == nil || !strings.Contains(err.Error(), field) {
+				t.Errorf("validate() error = %v, want one naming %s", err, field)
+			}
+		})
 	}
 }
 
@@ -196,7 +200,6 @@ func TestSchemaLoaderAgree(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestSchema(t *testing.T) {
@@ -238,9 +241,11 @@ func TestSchema(t *testing.T) {
 			"no repo":          "a:\n  source: github\n  homepage: h\n" + platforms + "  desc: d\n  install: [i]\n  test: t\n",
 			"unknown platform": "a:\n" + base + "  platforms: {darwin-arm64: a, plan9-amd64: a}\n",
 		} {
-			if validate(src) == nil {
-				t.Errorf("%s: schema accepted invalid entry", name)
-			}
+			t.Run(name, func(t *testing.T) {
+				if validate(src) == nil {
+					t.Error("schema accepted invalid entry")
+				}
+			})
 		}
 		for name, src := range map[string]string{
 			"go":              "a:\n  source: go\n  platforms: {darwin-arm64: a, darwin-amd64: a}\n  homepage: h\n  release_notes: n#{version}\n  desc: d\n  install: [i]\n  test: t\n",
@@ -250,9 +255,11 @@ func TestSchema(t *testing.T) {
 			"one platform":    "a:\n" + base + "  platforms: {darwin-arm64: a}\n",
 			"macos only":      "a:\n" + base + "  platforms: {darwin-arm64: a, darwin-amd64: a}\n",
 		} {
-			if err := validate(src); err != nil {
-				t.Errorf("%s: schema rejected valid entry: %v", name, err)
-			}
+			t.Run(name, func(t *testing.T) {
+				if err := validate(src); err != nil {
+					t.Errorf("schema rejected valid entry: %v", err)
+				}
+			})
 		}
 	})
 
@@ -328,8 +335,56 @@ func TestRenderConstraints(t *testing.T) {
 		"one linux file":  {[]File{linuxIntel}, "depends_on :linux\n  on_linux do\n    depends_on arch: :intel\n  end"},
 		"arm only":        {[]File{darwinArm, linuxArm}, "on_macos do\n    depends_on arch: :arm64\n  end\n  on_linux do\n    depends_on arch: :arm64\n  end"},
 	} {
-		if got := constraints(t, tc.files); got != tc.want {
-			t.Errorf("%s: constraints = %q, want %q", name, got, tc.want)
-		}
+		t.Run(name, func(t *testing.T) {
+			if got := constraints(t, tc.files); got != tc.want {
+				t.Errorf("constraints = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestRunners(t *testing.T) {
+	tests := map[string]struct {
+		platforms []string
+		want      []string
+	}{
+		"both":       {[]string{"darwin-arm64", "linux-amd64"}, []string{"macos-latest", "ubuntu-latest"}},
+		"mac only":   {[]string{"darwin-arm64", "darwin-amd64"}, []string{"macos-latest"}},
+		"linux only": {[]string{"linux-arm64"}, []string{"ubuntu-latest"}},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			spec := Spec{Platforms: map[string]string{}}
+			for _, p := range tt.platforms {
+				spec.Platforms[p] = "asset"
+			}
+			if got := spec.runners(); !slices.Equal(got, tt.want) {
+				t.Errorf("runners() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMatrix(t *testing.T) {
+	b, err := json.Marshal(matrix())
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Decoding into maps checks the JSON keys the workflow reads as matrix.formula and matrix.os.
+	var jobs []map[string]string
+	if err := json.Unmarshal(b, &jobs); err != nil {
+		t.Fatal(err)
+	}
+
+	got := map[string][]string{}
+	for _, job := range jobs {
+		got[job["formula"]] = append(got[job["formula"]], job["os"])
+	}
+	want := map[string][]string{}
+	for name, spec := range specs {
+		want[name] = spec.runners()
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("matrix = %v, want %v", got, want)
 	}
 }

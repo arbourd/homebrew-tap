@@ -5,9 +5,12 @@ on:
     paths:
       - .github/workflows/formula.yml
       - Formula/*.rb
+      - tools/formulae/**
+      - go.*
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,36 +21,34 @@ jobs:
     permissions:
       contents: read
     outputs:
-      formulae: ${{ steps.formulae.outputs.result }}
+      formulae: ${{ steps.formulae.outputs.formulae }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        id: formulae
         with:
-          script: |
-            const globber = await glob.create('Formula/*.rb')
-            const paths = await globber.glob()
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          cache: false
+          go-version-file: go.mod
 
-            const fs = require('fs')
-
-            // A bare `depends_on :macos` means macOS-only, so it is not tested on Linux.
-            // Likewise `depends_on :linux` is not tested on macOS.
-            // Versioned forms (`macos: :ventura`) still install on Linux.
-            const include = paths.flatMap((path) => {
-              const formula = path.split('/').pop().replace(/\.rb$/, '')
-              const text = fs.readFileSync(path, 'utf8')
-              const macosOnly = /^\s*depends_on\s+:macos\s*$/m.test(text)
-              const linuxOnly = /^\s*depends_on\s+:linux\s*$/m.test(text)
-              const oses = macosOnly ? ['macos-latest'] : linuxOnly ? ['ubuntu-latest'] : ['macos-latest', 'ubuntu-latest']
-              return oses.map((os) => ({ formula, os }))
-            })
-
-            console.log(include)
-            return include
+      - id: formulae
+        shell: bash
+        # On PRs, test only changed files unless the workflow or generator changed.
+        run: |
+          files=$(ls Formula/*.rb)
+          if [ "$GITHUB_EVENT_NAME" = pull_request ] && ! git diff --name-only "$BASE" HEAD | grep -qE '^(go\.|tools/formulae/|\.github/workflows/formula\.yml)'; then
+            files=$(git diff --name-only --diff-filter=d "$BASE" HEAD -- 'Formula/*.rb')
+          fi
+          names=$(echo "$files" | jq -Rnc '[inputs | select(. != "") | sub(".*/"; "") | sub("\\.rb$"; "")]')
+          matrix=$(go run ./tools/formulae --matrix | jq -c --argjson names "$names" 'map(select(.formula | IN($names[])))')
+          echo "formulae=$matrix" >> "$GITHUB_OUTPUT"
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
 
   test:
     name: test (${{ matrix.os }}, ${{ matrix.formula }})
+    if: needs.list.outputs.formulae != '[]'
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
