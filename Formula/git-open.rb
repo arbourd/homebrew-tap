@@ -28,6 +28,7 @@ class GitOpen < Formula
 
   def install
     bin.install "git-open"
+    man1.install "man/git-open.1"
   end
 
   test do
