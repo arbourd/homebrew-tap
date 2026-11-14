@@ -5,6 +5,7 @@
 //
 //	formulae <name>                    print the formula for <name>
 //	formulae --list                    print every name as a JSON array
+//	formulae --matrix                  print the CI formula and runner pairs as a JSON array
 //	formulae --notes <name> <version>  print the release notes URL for <version>
 package main
 
@@ -12,6 +13,7 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"maps"
@@ -116,6 +118,26 @@ func (f Formula) LinuxOnly() bool {
 	return !slices.ContainsFunc(f.Files, func(file File) bool { return file.Platform.Mac })
 }
 
+// runners returns the CI runners for the supported OSes.
+func (s Spec) runners() []string {
+	var mac, linux bool
+	for _, p := range platforms {
+		if _, ok := s.Platforms[p.Suffix]; ok {
+			mac = mac || p.Mac
+			linux = linux || !p.Mac
+		}
+	}
+
+	var runners []string
+	if mac {
+		runners = append(runners, "macos-latest")
+	}
+	if linux {
+		runners = append(runners, "ubuntu-latest")
+	}
+	return runners
+}
+
 const (
 	requestTimeout = 10 * time.Second
 	maxAttempts    = 3
@@ -165,7 +187,7 @@ var nameRe = regexp.MustCompile(`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`)
 
 func validateEntry(name string, s Spec) error {
 	if !nameRe.MatchString(name) {
-		return fmt.Errorf("name must start with a letter and be lowercase words joined by single hyphens")
+		return errors.New("name must start with a letter and be lowercase words joined by single hyphens")
 	}
 	return s.validate()
 }
@@ -178,26 +200,26 @@ func (s Spec) validate() error {
 	case s.Source != "github" && s.Source != "go":
 		return fmt.Errorf("source must be github or go, got %q", s.Source)
 	case s.Source == "go" && (s.Repo != "" || s.Conflicts != nil || s.TagPrefix != nil):
-		return fmt.Errorf("repo, tag_prefix and conflicts do not apply to source go")
+		return errors.New("repo, tag_prefix and conflicts do not apply to source go")
 	case s.Homepage == "":
-		return fmt.Errorf("homepage is required")
+		return errors.New("homepage is required")
 	case s.Source == "go" && s.ReleaseNotes == "":
-		return fmt.Errorf("release_notes is required for source go")
+		return errors.New("release_notes is required for source go")
 	case s.ReleaseNotes != "" && !strings.Contains(s.ReleaseNotes, "#{version}"):
-		return fmt.Errorf("release_notes must contain #{version}")
+		return errors.New("release_notes must contain #{version}")
 	case s.Source == "github" && !repoRe.MatchString(s.Repo):
 		return fmt.Errorf("repo %q must be owner/name", s.Repo)
 	case s.Desc == "":
-		return fmt.Errorf("desc is required")
+		return errors.New("desc is required")
 	case len(s.Install) == 0:
-		return fmt.Errorf("install is required")
+		return errors.New("install is required")
 	case s.Test == "":
-		return fmt.Errorf("test is required")
+		return errors.New("test is required")
 	case slices.Contains(s.Install, ""):
-		return fmt.Errorf("install lines must not be empty")
+		return errors.New("install lines must not be empty")
 	}
 	if len(s.Platforms) == 0 {
-		return fmt.Errorf("platforms is required")
+		return errors.New("platforms is required")
 	}
 	for _, suffix := range slices.Sorted(maps.Keys(s.Platforms)) {
 		if !slices.ContainsFunc(platforms, func(p Platform) bool { return p.Suffix == suffix }) {
@@ -213,24 +235,26 @@ func (s Spec) validate() error {
 func main() {
 	switch {
 	case len(os.Args) == 2 && os.Args[1] == "--list":
-		if err := json.NewEncoder(os.Stdout).Encode(names()); err != nil {
-			log.Fatal(err)
-		}
+		printJSON(names())
+		return
+	case len(os.Args) == 2 && os.Args[1] == "--matrix":
+		printJSON(matrix())
 		return
 	case len(os.Args) == 4 && os.Args[1] == "--notes":
-		spec, ok := specs[os.Args[2]]
-		if !ok {
-			log.Fatalf("unknown formula %q; names: %s", os.Args[2], strings.Join(names(), ", "))
+		spec, err := lookup(os.Args[2])
+		if err != nil {
+			log.Fatal(err)
 		}
 		fmt.Println(strings.ReplaceAll(spec.ReleaseNotes, "#{version}", os.Args[3]))
 		return
 	case len(os.Args) != 2:
-		log.Fatalf("usage: formulae <name> | --list | --notes <name> <version>; names: %s", strings.Join(names(), ", "))
+		log.Fatalf("usage: formulae <name> | --list | --matrix | --notes <name> <version>; names: %s", strings.Join(names(), ", "))
 	}
+
 	name := os.Args[1]
-	spec, ok := specs[name]
-	if !ok {
-		log.Fatalf("unknown formula %q; names: %s", name, strings.Join(names(), ", "))
+	spec, err := lookup(name)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	formula, err := latest(name, spec)
@@ -244,32 +268,63 @@ func main() {
 	fmt.Print(s)
 }
 
-// latest builds the formula for the newest release from the spec's source.
+// lookup returns the registry entry for name.
+func lookup(name string) (Spec, error) {
+	spec, ok := specs[name]
+	if !ok {
+		return Spec{}, fmt.Errorf("unknown formula %q; names: %s", name, strings.Join(names(), ", "))
+	}
+	return spec, nil
+}
+
+// testJob is a formula on a runner.
+type testJob struct {
+	Formula string `json:"formula"`
+	OS      string `json:"os"`
+}
+
+// matrix lists every testJob.
+func matrix() []testJob {
+	jobs := []testJob{}
+	for _, name := range names() {
+		for _, runner := range specs[name].runners() {
+			jobs = append(jobs, testJob{name, runner})
+		}
+	}
+	return jobs
+}
+
+func printJSON(v any) {
+	if err := json.NewEncoder(os.Stdout).Encode(v); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// latest builds the formula for the newest release.
 func latest(name string, spec Spec) (Formula, error) {
-	if spec.Source == "go" {
-		r, err := fetchGoReleases(goDL + "?mode=json")
+	switch spec.Source {
+	case "go":
+		releases, err := fetchGoReleases(goDL + "?mode=json")
 		if err != nil {
 			return Formula{}, err
 		}
-		if len(r) == 0 {
-			return Formula{}, fmt.Errorf("no Go releases found")
+		if len(releases) == 0 {
+			return Formula{}, errors.New("no Go releases found")
 		}
-		return buildGoFormula(name, spec, r[0])
+		return buildGoFormula(name, spec, releases[0])
+	case "github":
+		release, err := fetchRelease("https://api.github.com/repos/" + spec.Repo + "/releases/latest")
+		if err != nil {
+			return Formula{}, err
+		}
+		return buildFormula(name, spec, release)
+	default:
+		return Formula{}, fmt.Errorf("unknown source %q", spec.Source)
 	}
-	r, err := fetchRelease("https://api.github.com/repos/" + spec.Repo + "/releases/latest")
-	if err != nil {
-		return Formula{}, err
-	}
-	return buildFormula(name, spec, r)
 }
 
 func names() []string {
-	n := make([]string, 0, len(specs))
-	for k := range specs {
-		n = append(n, k)
-	}
-	slices.Sort(n)
-	return n
+	return slices.Sorted(maps.Keys(specs))
 }
 
 // getJSON decodes the JSON at url, trying up to maxAttempts times.
@@ -319,7 +374,7 @@ func getJSONOnce[T any](client *http.Client, url string, setHeaders func(*http.R
 // class turns a formula name into its Ruby class name: git-get -> GitGet.
 func class(name string) string {
 	var b strings.Builder
-	for _, p := range strings.Split(name, "-") {
+	for p := range strings.SplitSeq(name, "-") {
 		b.WriteString(strings.ToUpper(p[:1]) + p[1:])
 	}
 	return b.String()
@@ -337,13 +392,11 @@ func indent(n int, s string) string {
 	return strings.Join(lines, "\n")
 }
 
+var formulaTmpl = template.Must(template.New("formula").Funcs(template.FuncMap{"indent": indent, "join": strings.Join}).Parse(tmpl))
+
 func renderFormula(formula Formula) (string, error) {
-	t, err := template.New("formula").Funcs(template.FuncMap{"indent": indent, "join": strings.Join}).Parse(tmpl)
-	if err != nil {
-		return "", err
-	}
 	var buf strings.Builder
-	if err := t.Execute(&buf, formula); err != nil {
+	if err := formulaTmpl.Execute(&buf, formula); err != nil {
 		return "", err
 	}
 	return buf.String(), nil

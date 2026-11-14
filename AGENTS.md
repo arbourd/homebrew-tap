@@ -9,6 +9,12 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   `githubsource.go` / `gosource.go` the release sources, `testdata/*.rb.golden` the expected output.
 - `.github/workflows/`: `formulae-update.yml` and `cask-bump.yml` open bump PRs; `formula.yml` and
   `cask.yml` test them; `go-build.yml` tests the generator.
+- On PRs, `formula.yml` and `cask.yml` test only the changed `Formula/*.rb` / `Casks/*.rb`. Pushes to main and
+  manual runs test everything, as do PRs that change the workflow itself (for `formula.yml`, also `go.*` or
+  `tools/formulae/**`).
+- Keep `shell: bash` on their `list` steps: the default shell has no `pipefail`, so a failed generator call
+  would skip the tests silently. They also diff against `HEAD^1`, so keep the default PR merge checkout with
+  `fetch-depth: 2`. A `Formula/*.rb` without a registry entry is intentionally not tested.
 
 ## Formulae registry
 
@@ -30,9 +36,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - Every release asset needs a GitHub `digest`. A listed platform with a missing asset or digest fails the
   build; drop the platform from `platforms` if upstream stops publishing it.
 - The formula's constraints follow from the platform set:
-  - no Linux platform: `depends_on :macos`; no macOS platform: `depends_on :linux`. `formula.yml` then
-    tests only the other OS, but only for these bare lines; a versioned form (`macos: :ventura`) is still
-    tested on Linux.
+  - no Linux platform: `depends_on :macos`; no macOS platform: `depends_on :linux`. `formula.yml` runs
+    `go run ./tools/formulae --matrix`, which tests each formula only on the OSes in its `platforms`.
   - one arch of an OS (e.g. no `darwin-amd64`): `on_macos do depends_on arch: :arm64 end` (`on_linux`,
     `:intel` likewise)
 
@@ -50,7 +55,7 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 3. `go test ./tools/formulae -run 'TestRenderFormula/^<name>$' -update` creates
    `testdata/<name>.rb.golden` (the golden test fails without it). Commit only that file: a bare `-update`
    also rewrites the `go` golden, which depends on go.dev.
-4. Test it with Brew (see Checks). Workflows derive from the registry and `Formula/*.rb`; no edits needed.
+4. Test it with Brew (see Checks). Workflows derive from the registry and the changed `Formula/*.rb`; no edits needed.
 
 ## Adding a cask
 
@@ -79,8 +84,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - `setup-homebrew` already links the checkout as the `arbourd/tap` tap. Don't add an `ln -s` step in a
   workflow that opens PRs: it nests a `homebrew-tap` symlink in the checkout and `create-pull-request`
   commits it. Write scratch files to `$RUNNER_TEMP`, not the checkout, for the same reason.
-- `cask.yml` needs at least one cask in `Casks/` (an empty matrix errors). If the last cask is
-  removed, disable both jobs with `if: false`.
+- `cask.yml` needs at least one cask in `Casks/` (its list step runs `ls Casks/*.rb`, which fails when
+  none exist). If the last cask is removed, disable both jobs with `if: false`.
 - Renovate (`.github/renovate.json`) pins actions to SHAs with a semver comment and also bumps `go.mod`.
   Minor and patch action bumps wait 7 days; those for `actions/*` then automerge, and everything else is manual.
 - Run `actionlint` after changing anything under `.github/workflows/`.
@@ -90,6 +95,7 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 
 - Generator: `go vet ./... && go test ./... -race && go run ./tools/formulae go` (hits go.dev).
   `go run ./tools/formulae <name>` hits the GitHub API; set `GITHUB_TOKEN` to avoid rate limits.
+  `go run ./tools/formulae --matrix` prints what `formula.yml` tests.
 - After changing a template, run `go test ./tools/formulae -update`, then review the golden diff.
 - Brew: mirror `formula.yml` / `cask.yml`. Symlink the checkout first
   (`ln -s "$PWD" "$(brew --repository)/Library/Taps/arbourd/homebrew-tap"`) and set
