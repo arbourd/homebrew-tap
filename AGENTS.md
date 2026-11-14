@@ -12,6 +12,9 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 - On PRs, `formula.yml` and `cask.yml` test only the changed `Formula/*.rb` / `Casks/*.rb`. Pushes to main and
   manual runs test everything, as do PRs that change the workflow itself (for `formula.yml`, also `go.*` or
   `tools/formulae/**`).
+- Keep `shell: bash` on their `list` steps: the default shell has no `pipefail`, so a failed generator call
+  would skip the tests silently. They also diff against `HEAD^1`, so keep the default PR merge checkout with
+  `fetch-depth: 2`. A `Formula/*.rb` without a registry entry is intentionally not tested.
 
 ## Formulae registry
 
@@ -52,7 +55,7 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 3. `go test ./tools/formulae -run 'TestRenderFormula/^<name>$' -update` creates
    `testdata/<name>.rb.golden` (the golden test fails without it). Commit only that file: a bare `-update`
    also rewrites the `go` golden, which depends on go.dev.
-4. Test it with Brew (see Checks). Workflows derive from the registry and `Formula/*.rb`; no edits needed.
+4. Test it with Brew (see Checks). Workflows derive from the registry and the changed `Formula/*.rb`; no edits needed.
 
 ## Adding a cask
 
@@ -92,6 +95,7 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 
 - Generator: `go vet ./... && go test ./... -race && go run ./tools/formulae go` (hits go.dev).
   `go run ./tools/formulae <name>` hits the GitHub API; set `GITHUB_TOKEN` to avoid rate limits.
+  `go run ./tools/formulae --matrix` prints what `formula.yml` tests.
 - After changing a template, run `go test ./tools/formulae -update`, then review the golden diff.
 - Brew: mirror `formula.yml` / `cask.yml`. Symlink the checkout first
   (`ln -s "$PWD" "$(brew --repository)/Library/Taps/arbourd/homebrew-tap"`) and set

@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: 2
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           cache: false
@@ -37,14 +37,15 @@ jobs:
         # On PRs, test only changed files unless the workflow or generator changed.
         run: |
           files=$(ls Formula/*.rb)
-          if [ "$GITHUB_EVENT_NAME" = pull_request ] && ! git diff --name-only "$BASE" HEAD | grep -qE '^(go\.|tools/formulae/|\.github/workflows/formula\.yml)'; then
-            files=$(git diff --name-only --diff-filter=d "$BASE" HEAD -- 'Formula/*.rb')
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            changed=$(git diff --name-only HEAD^1 HEAD)
+            if ! grep -qE '^(go\.|tools/formulae/|\.github/workflows/formula\.yml)' <<<"$changed"; then
+              files=$(git diff --name-only --diff-filter=d HEAD^1 HEAD -- 'Formula/*.rb')
+            fi
           fi
           names=$(echo "$files" | jq -Rnc '[inputs | select(. != "") | sub(".*/"; "") | sub("\\.rb$"; "")]')
           matrix=$(go run ./tools/formulae --matrix | jq -c --argjson names "$names" 'map(select(.formula | IN($names[])))')
           echo "formulae=$matrix" >> "$GITHUB_OUTPUT"
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
 
   test:
     name: test (${{ matrix.os }}, ${{ matrix.formula }})

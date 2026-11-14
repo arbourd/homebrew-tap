@@ -24,20 +24,21 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
       - id: casks
         shell: bash
         # On PRs, test only changed files unless the workflow changed.
         run: |
           files=$(ls Casks/*.rb)
-          if [ "$GITHUB_EVENT_NAME" = pull_request ] && ! git diff --name-only "$BASE" HEAD | grep -qxF .github/workflows/cask.yml; then
-            files=$(git diff --name-only --diff-filter=d "$BASE" HEAD -- 'Casks/*.rb')
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            changed=$(git diff --name-only HEAD^1 HEAD)
+            if ! grep -qxF .github/workflows/cask.yml <<<"$changed"; then
+              files=$(git diff --name-only --diff-filter=d HEAD^1 HEAD -- 'Casks/*.rb')
+            fi
           fi
           casks=$(echo "$files" | jq -Rnc '[inputs | select(. != "") | sub(".*/"; "") | sub("\\.rb$"; "")]')
           echo "casks=$casks" >> "$GITHUB_OUTPUT"
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
 
   test:
     if: needs.list.outputs.casks != '[]'
