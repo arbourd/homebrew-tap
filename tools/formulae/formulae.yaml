@@ -43,6 +43,7 @@ git-open:
 
   install:
     - bin.install "git-open"
+    - man1.install "man/git-open.1"
 
   test: |-
     url = "https://github.com/arbourd/git-open"
@@ -72,6 +73,7 @@ git-sync:
 
   install:
     - bin.install "git-sync"
+    - man1.install "man/git-sync.1"
 
   test: |-
     system "git", "clone", "https://github.com/arbourd/git-sync.git"

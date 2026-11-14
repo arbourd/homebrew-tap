@@ -29,6 +29,7 @@ class GitSync < Formula
 
   def install
     bin.install "git-sync"
+    man1.install "man/git-sync.1"
   end
 
   test do
