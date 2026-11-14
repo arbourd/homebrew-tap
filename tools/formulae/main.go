@@ -34,6 +34,8 @@ type Spec struct {
 	Repo     string `yaml:"repo"`
 	Desc     string `yaml:"desc"`
 	Homepage string `yaml:"homepage"`
+	// TagPrefix is what precedes the version in release tags; unset means "v", "" means none.
+	TagPrefix *string `yaml:"tag_prefix"`
 	// ReleaseNotes is the PR body link; `#{version}` is replaced by the version.
 	ReleaseNotes string   `yaml:"release_notes"`
 	Conflicts    []string `yaml:"conflicts"`
@@ -42,6 +44,13 @@ type Spec struct {
 	Platforms map[string]string `yaml:"platforms"`
 	Install   []string          `yaml:"install"`
 	Test      string            `yaml:"test"`
+}
+
+func (s Spec) tagPrefix() string {
+	if s.TagPrefix == nil {
+		return "v"
+	}
+	return *s.TagPrefix
 }
 
 // Platform is one release target. Suffix is the `<os>-<arch>` key used in `platforms`.
@@ -144,7 +153,7 @@ func parseSpecs(src []byte) (map[string]Spec, error) {
 			return nil, fmt.Errorf("formulae.yaml: %s: %w", name, err)
 		}
 		if spec.ReleaseNotes == "" {
-			spec.ReleaseNotes = "https://github.com/" + spec.Repo + "/releases/tag/v#{version}"
+			spec.ReleaseNotes = "https://github.com/" + spec.Repo + "/releases/tag/" + spec.tagPrefix() + "#{version}"
 			m[name] = spec
 		}
 	}
@@ -168,8 +177,8 @@ func (s Spec) validate() error {
 	switch {
 	case s.Source != "github" && s.Source != "go":
 		return fmt.Errorf("source must be github or go, got %q", s.Source)
-	case s.Source == "go" && (s.Repo != "" || s.Conflicts != nil):
-		return fmt.Errorf("repo and conflicts do not apply to source go")
+	case s.Source == "go" && (s.Repo != "" || s.Conflicts != nil || s.TagPrefix != nil):
+		return fmt.Errorf("repo, tag_prefix and conflicts do not apply to source go")
 	case s.Homepage == "":
 		return fmt.Errorf("homepage is required")
 	case s.Source == "go" && s.ReleaseNotes == "":

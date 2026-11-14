@@ -10,7 +10,7 @@ import (
 )
 
 // The tag is written into the formula and the PR, so reject anything unexpected.
-var tagRe = regexp.MustCompile(`^v[0-9]+\.[0-9]+(\.[0-9]+)?$`)
+var versionRe = regexp.MustCompile(`^[0-9]+\.[0-9]+(\.[0-9]+)?$`)
 
 type Asset struct {
 	Name   string `json:"name"`
@@ -33,10 +33,11 @@ func fetchRelease(url string) (Release, error) {
 }
 
 func buildFormula(name string, spec Spec, r Release) (Formula, error) {
-	if !tagRe.MatchString(r.Tag) {
-		return Formula{}, fmt.Errorf("invalid tag %q", r.Tag)
+	prefix := spec.tagPrefix()
+	version, ok := strings.CutPrefix(r.Tag, prefix)
+	if !ok || !versionRe.MatchString(version) {
+		return Formula{}, fmt.Errorf("invalid tag %q, want %sX.Y.Z", r.Tag, prefix)
 	}
-	version := strings.TrimPrefix(r.Tag, "v")
 	formula := Formula{Spec: spec, Name: name, Class: class(name), Version: version}
 
 	var problems []string
@@ -45,7 +46,7 @@ func buildFormula(name string, spec Spec, r Release) (Formula, error) {
 		if !ok {
 			continue
 		}
-		url := fmt.Sprintf("https://github.com/%s/releases/download/v#{version}/%s", spec.Repo, file)
+		url := fmt.Sprintf("https://github.com/%s/releases/download/%s#{version}/%s", spec.Repo, prefix, file)
 		asset := strings.ReplaceAll(file, "#{version}", version)
 		i := slices.IndexFunc(r.Assets, func(a Asset) bool { return a.Name == asset })
 		if i < 0 {

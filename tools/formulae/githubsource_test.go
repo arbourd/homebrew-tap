@@ -114,6 +114,29 @@ func TestBuildFormulaInvalid(t *testing.T) {
 	}
 }
 
+func TestBuildFormulaNoTagPrefix(t *testing.T) {
+	empty := ""
+	spec := specs["git-open"]
+	spec.TagPrefix = &empty
+	r := release("git-open")
+	r.Tag = "1.2.3"
+	f, err := buildFormula("git-open", spec, r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := renderFormula(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "/releases/download/#{version}/"; !strings.Contains(got, want) {
+		t.Errorf("formula is missing %q:\n%s", want, got)
+	}
+	r.Tag = "v1.2.3"
+	if _, err := buildFormula("git-open", spec, r); err == nil {
+		t.Error("buildFormula() accepted v tag with empty tag_prefix")
+	}
+}
+
 // A release without a macOS Intel build keeps its Intel Mac out of the formula and constrains macOS to arm64.
 func TestBuildFormulaNoDarwinIntel(t *testing.T) {
 	spec := Spec{Source: "github", Repo: "o/tool", Homepage: "h", Desc: "d", Install: []string{"i"}, Test: "t", Platforms: map[string]string{
