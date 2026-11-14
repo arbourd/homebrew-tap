@@ -42,7 +42,7 @@ class Opengrep < Formula
           severity: WARNING
     YAML
     (testpath/"test.py").write "eval(input())\n"
-    assert_match "1 Code Finding",
+    assert_match "1 finding in 1 file",
                  shell_output("#{bin}/opengrep scan --config rule.yml test.py")
   end
 end
