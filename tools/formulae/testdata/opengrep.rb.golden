@@ -43,6 +43,6 @@ class Opengrep < Formula
     YAML
     (testpath/"test.py").write "eval(input())\n"
     assert_match "1 finding in 1 file",
-                 shell_output("#{bin}/opengrep scan --config rule.yml test.py")
+                 shell_output("#{bin}/opengrep scan --config rule.yml test.py 2>&1")
   end
 end
