@@ -2,26 +2,26 @@
 class GitSync < Formula
   desc "Updates your branches"
   homepage "https://github.com/arbourd/git-sync"
-  version "0.3.0"
+  version "1.0.0"
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/arbourd/git-sync/releases/download/v#{version}/git-sync-v#{version}-darwin-arm64.tar.gz"
-    sha256 "a9e67276daa30b7cdc40e519396c4073f8b6274ab3f50fb2e46585d37f95307c"
+    sha256 "473e27404a3e084e7156bed7d54832ba5291837e9464f4b7b0bb0a4bd68b8fe2"
   end
 
   if OS.mac? && Hardware::CPU.intel?
     url "https://github.com/arbourd/git-sync/releases/download/v#{version}/git-sync-v#{version}-darwin-amd64.tar.gz"
-    sha256 "565414dfbee646ff496e04a6600d829fe11c8bf40a2fea718060214dd6751236"
+    sha256 "a19fc59e3d57f8902c8c10fe758da29844a776de34fafdf3d2274dc40de7d368"
   end
 
   if OS.linux? && Hardware::CPU.intel?
     url "https://github.com/arbourd/git-sync/releases/download/v#{version}/git-sync-v#{version}-linux-amd64.tar.gz"
-    sha256 "06d44f442e2eba9762d0db1ed7e32f6af1fee87586c0d5ed41fca4dc978cf8c0"
+    sha256 "f02c1d6f24b8aba512533b8e7201b3cbdb7084c0e11efee912337612b67ae474"
   end
 
   if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
     url "https://github.com/arbourd/git-sync/releases/download/v#{version}/git-sync-v#{version}-linux-arm64.tar.gz"
-    sha256 "36f4ef3fcfda04fbb1d0415efe3a14ddb9abd89c9099c5f538b7e89f6ab38c01"
+    sha256 "f6292b24dfe21e3441f98caf3d5229bfb0ffbede6ca684ad440eeb6b1511b7a0"
   end
 
   conflicts_with "git-extras"
@@ -29,6 +29,7 @@ class GitSync < Formula
 
   def install
     bin.install "git-sync"
+    man1.install "man/git-sync.1"
   end
 
   test do
