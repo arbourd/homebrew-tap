@@ -114,8 +114,8 @@ opengrep:
   platforms:
     darwin-arm64: opengrep_osx_arm64
     darwin-amd64: opengrep_osx_x86
-    linux-amd64: opengrep_manylinux_x86
-    linux-arm64: opengrep_manylinux_aarch64
+    linux-amd64: opengrep_linux_x86
+    linux-arm64: opengrep_linux_aarch64
 
   install:
     - bin.install Dir["opengrep_*"].first => "opengrep"

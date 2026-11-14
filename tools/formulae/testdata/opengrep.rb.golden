@@ -15,12 +15,12 @@ class Opengrep < Formula
   end
 
   if OS.linux? && Hardware::CPU.intel?
-    url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_manylinux_x86"
+    url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_linux_x86"
     sha256 "0000000000000000000000000000000000000000000000000000000000000003"
   end
 
   if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-    url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_manylinux_aarch64"
+    url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_linux_aarch64"
     sha256 "0000000000000000000000000000000000000000000000000000000000000004"
   end
 
