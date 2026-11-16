@@ -1,6 +1,6 @@
 # homebrew-tap
 
-A personal collection of formulae, casks and mirrors
+A personal collection of formulae and mirrors
 
 ## Formulae
 
@@ -12,14 +12,9 @@ A personal collection of formulae, casks and mirrors
 * [opengrep](https://github.com/opengrep/opengrep)
 * [trash](https://github.com/arbourd/trashOS)
 
-## Casks
-
-* [orca](https://github.com/stablyai/orca)
-
 ## Usage
 
 ```console
 $ brew tap arbourd/tap
 $ brew install <formula>
-$ brew install --cask <cask>
 ```

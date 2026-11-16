@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   list:
+    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -41,7 +42,7 @@ jobs:
           echo "casks=$casks" >> "$GITHUB_OUTPUT"
 
   test:
-    if: needs.list.outputs.casks != '[]'
+    if: false
     runs-on: macos-latest
     permissions:
       contents: read

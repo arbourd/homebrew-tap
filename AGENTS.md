@@ -4,7 +4,10 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 
 ## Layout
 
-- `Formula/*.rb`: generated, one per registry entry. `Casks/*.rb`: hand-written.
+- `Formula/*.rb`: generated, one per registry entry. `Casks/*.rb`: hand-written; currently none, so the cask
+  jobs are disabled (see Workflows).
+- `tap_migrations.json`: renamed or moved formulae/casks (`orca` moved to `stablyai/orca`). Keep entries; they
+  redirect existing installs. Don't add a formula or cask with a migrated name back to this tap.
 - `tools/formulae/`: the generator. `formulae.yaml` is the registry, `main.go` the template,
   `githubsource.go` / `gosource.go` the release sources, `testdata/*.rb.golden` the expected output.
 - `.github/workflows/`: `formulae-update.yml` and `cask-bump.yml` open bump PRs; `formula.yml` and
@@ -59,12 +62,13 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
 
 ## Adding a cask
 
-1. Write `Casks/<name>.rb` by hand, modeled on `Casks/orca.rb`: `livecheck` with
+1. Write `Casks/<name>.rb` by hand, modeled on the old orca cask (`git show b01af31:Casks/orca.rb`): `livecheck` with
    `strategy :github_latest` and a `regex(...)` (so livecheck matches `version`), `url :url`, `depends_on macos:`,
    `zap trash:`. Take the initial `version` and each arch's `sha256` from the asset digests (drop the
    `sha256:` prefix): `gh api repos/<owner>/<repo>/releases/latest --jq '.assets[] | [.name, .digest]'`.
    `cask-bump.yml` only updates them afterward.
-2. `cask.yml` and `cask-bump.yml` pick the file up by glob; no workflow edits.
+2. `cask.yml` and `cask-bump.yml` pick the file up by glob. While `Casks/` is empty their jobs are disabled:
+   remove `if: false` from each job, and restore `if: needs.list.outputs.casks != '[]'` on `cask.yml`'s `test`.
 3. Run `cask.yml`'s steps locally (see Checks for Brew setup):
    `brew style --cask`, `brew audit --cask --strict --online --except livecheck_version`,
    `brew livecheck --cask`, `brew install --cask`, `brew uninstall --cask --zap` (all with
@@ -85,7 +89,8 @@ Personal Homebrew tap: formulae in `Formula/`, casks in `Casks/`.
   workflow that opens PRs: it nests a `homebrew-tap` symlink in the checkout and `create-pull-request`
   commits it. Write scratch files to `$RUNNER_TEMP`, not the checkout, for the same reason.
 - `cask.yml` needs at least one cask in `Casks/` (its list step runs `ls Casks/*.rb`, which fails when
-  none exist). If the last cask is removed, disable both jobs with `if: false`.
+  none exist). The last cask is gone, so both workflows have `if: false` on every job (`actionlint` flags the
+  constant condition; ignore it).
 - Renovate (`.github/renovate.json`) pins actions to SHAs with a semver comment and also bumps `go.mod`.
   Minor and patch action bumps wait 7 days; those for `actions/*` then automerge, and everything else is manual.
 - Run `actionlint` after changing anything under `.github/workflows/`.
