@@ -2,26 +2,26 @@
 class GitOpen < Formula
   desc "Opens your Git repository in your browser"
   homepage "https://github.com/arbourd/git-open"
-  version "1.2.0"
+  version "1.3.0"
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/arbourd/git-open/releases/download/v#{version}/git-open-v#{version}-darwin-arm64.tar.gz"
-    sha256 "40dd26360d86f0ef2be690aa5163980b7602415633f180b7ea1eaecc363fe28b"
+    sha256 "118cf378605fb7e394850880693d7f1fb1edd7c27775ec97998e5ee08f35c90b"
   end
 
   if OS.mac? && Hardware::CPU.intel?
     url "https://github.com/arbourd/git-open/releases/download/v#{version}/git-open-v#{version}-darwin-amd64.tar.gz"
-    sha256 "1cd397798472a5d8074caaca9981c6b8f33760c2eb699c7aaeb68500205a925f"
+    sha256 "3bc6cca9d8a1622d044c84e10eeec42249c5b8ebc62b2ba4099de863d8c461be"
   end
 
   if OS.linux? && Hardware::CPU.intel?
     url "https://github.com/arbourd/git-open/releases/download/v#{version}/git-open-v#{version}-linux-amd64.tar.gz"
-    sha256 "a71e3cefbd70ca85b7a2e494c1f2413a1a3becd3c178c3fc2264f218b3324234"
+    sha256 "8f46d5479793c2364460ca8c7a1300ca96b3b8a593ea397f638a223c430e98f4"
   end
 
   if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
     url "https://github.com/arbourd/git-open/releases/download/v#{version}/git-open-v#{version}-linux-arm64.tar.gz"
-    sha256 "843f3c1ea25f1f2c54b5ebd5cdfff909dd6bd448dac5e98e235b054f238a999e"
+    sha256 "0b531fd11c0da4560809a72dcbc09a28132a31f48716c6af1f517a10f12b5dca"
   end
 
   conflicts_with "git-open"
