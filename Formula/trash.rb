@@ -2,17 +2,17 @@
 class Trash < Formula
   desc "Safely move items to macOS trash asynchronously"
   homepage "https://github.com/arbourd/trash"
-  version "0.4.0"
+  version "0.4.2"
   depends_on :macos
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/arbourd/trash/releases/download/v#{version}/trash-v#{version}-darwin-arm64.tar.gz"
-    sha256 "63be630a9d05f74ca0abf6cd080e9dc95c5efdd455a9de81b1ea6646b4194331"
+    sha256 "83a1fa405fe761fe5973c9b6329c3f4b86874c823a632560a91ad0fcc9c39b8e"
   end
 
   if OS.mac? && Hardware::CPU.intel?
     url "https://github.com/arbourd/trash/releases/download/v#{version}/trash-v#{version}-darwin-amd64.tar.gz"
-    sha256 "b0898dfa80edbda6b6fa1bd3d3ee1e2b427bff619970edbb97e39b9a603dd1ca"
+    sha256 "ed21f7927cd079ed790986f7e97b2419c6c02c7c1de3316236258341b5e5bcf3"
   end
 
   conflicts_with "macos-trash"
