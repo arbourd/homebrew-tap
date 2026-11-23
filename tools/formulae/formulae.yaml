@@ -107,6 +107,26 @@ trash:
     assert_match "could not be moved to the trash",
                  shell_output("#{bin}/trash #{testpath}/missing 2>&1", 1)
 
+dot:
+  source: github
+  repo: arbourd/dotfiles
+
+  desc: Sets up and maintains a macOS machine from the arbourd dotfiles
+  homepage: https://github.com/arbourd/dotfiles
+  conflicts: [graphviz]
+  platforms:
+    darwin-arm64: dot-v#{version}-darwin-arm64.tar.gz
+    darwin-amd64: dot-v#{version}-darwin-amd64.tar.gz
+
+  install:
+    - bin.install "dot"
+    - bash_completion.install "completions/dot.bash" => "dot"
+    - zsh_completion.install "completions/_dot"
+    - fish_completion.install "completions/dot.fish"
+
+  test: |-
+    assert_match "dot [command]", shell_output("#{bin}/dot --help")
+
 opengrep:
   source: github
   repo: opengrep/opengrep
