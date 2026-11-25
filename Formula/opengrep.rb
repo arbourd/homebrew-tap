@@ -2,26 +2,26 @@
 class Opengrep < Formula
   desc "Static code analysis engine to find security issues in code"
   homepage "https://github.com/opengrep/opengrep"
-  version "2.0.0"
+  version "2.1.0"
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_osx_arm64"
-    sha256 "b51b3d83f165a2e0934497b8f1b08abb1c3041ef20ef911c97e04cb39af1ad55"
+    sha256 "0beb60121c3f1702c0aee34c0a7ca02599902f16676f54e4a95f317838f19bdd"
   end
 
   if OS.mac? && Hardware::CPU.intel?
     url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_osx_x86"
-    sha256 "51d2f918d7aad0afc1426bb4fbf56e32fc70c3ffd5ddb78e32e7d61e51c029a2"
+    sha256 "4009b6fa5c45e027835b54837eedf7aa5ea7d778c77a9f98f27cfbc463b2a0da"
   end
 
   if OS.linux? && Hardware::CPU.intel?
     url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_linux_x86"
-    sha256 "37e93f4da5fd04a18c5c1febbdd12f7e98dfccd4d0c9cf2593bcb25eeb462da0"
+    sha256 "d6a68a84c01a3d8ee933f60847decf1b4d0fd7791a26833b32b95922baf28974"
   end
 
   if OS.linux? && Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
     url "https://github.com/opengrep/opengrep/releases/download/v#{version}/opengrep_linux_aarch64"
-    sha256 "6257b65423a744b704af2ff9beeb8f222c2f6925236af386b56b031d4c06d6d8"
+    sha256 "3abfc87d66f208efd143a1b408d489af934cea7d9968ab1f37dca001f9886092"
   end
 
   def install
