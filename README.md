@@ -4,7 +4,6 @@ A personal collection of formulae and mirrors
 
 ## Formulae
 
-* [awman](https://github.com/prettysmartdev/awman)
 * [git-get](https://github.com/arbourd/git-get)
 * [git-open](https://github.com/arbourd/git-open)
 * [git-sync](https://github.com/arbourd/git-sync)

@@ -33,7 +33,7 @@ Personal Homebrew tap: generated formulae in `Formula/`, hand-written casks in `
 
 1. Add a `formulae.yaml` entry keyed by formula name. Required: `source`, `repo`, `desc`, `homepage`,
    `platforms`, `install`, `test`. Copy the closest entry: `git-get` (GoReleaser-style assets), `trash`
-   (macOS-only binary), `opengrep` (custom asset names), `awman` (partial platform set, bare binary assets).
+   (macOS-only binary), `opengrep` (custom asset names).
 2. `go run ./tools/formulae <name> > /tmp/<name>.rb`; on exit 0 and sane output, move it to
    `Formula/<name>.rb` and commit it (redirecting straight into `Formula/` leaves an empty file on
    failure). Workflows only open bump PRs, never the first file. Until the project's GoReleaser `brews:`
